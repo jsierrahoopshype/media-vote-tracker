@@ -19,6 +19,7 @@
 body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);
   color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
 .container{max-width:1400px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 
 /* nav tabs */
 .tabs{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap}
@@ -36,7 +37,7 @@ body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;backgroun
 /* filter bar */
 .filters{position:sticky;top:0;z-index:100;background:var(--bg);padding:.6rem 0 .9rem;
   margin-bottom:.5rem;border-bottom:1px solid var(--border)}
-.filter-row{display:grid;grid-template-columns:2fr 1.1fr 1.1fr 1.5fr auto;gap:.6rem;align-items:end}
+.filter-row{display:grid;grid-template-columns:2fr 1.1fr 1.5fr auto;gap:.6rem;align-items:end}
 .filter-group{display:flex;flex-direction:column;gap:.3rem;min-width:0}
 .filter-group label{font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;
   letter-spacing:.06em;font-weight:600}
@@ -70,8 +71,14 @@ table.lb td{padding:.55rem .6rem;text-align:center;font-family:'JetBrains Mono',
   font-weight:500;white-space:nowrap}
 table.lb td.sorted-by{background:rgba(59,130,246,.05)}
 td.rank{color:var(--text-secondary);font-size:.78rem;width:2.4rem}
-td.rep{text-align:left;font-family:'DM Sans',sans-serif;max-width:17rem}
+table.lb td.rep{text-align:left;font-family:'DM Sans',sans-serif;max-width:17rem}
+.rep-outlet a{color:var(--text-secondary)}
+.rep-outlet a:hover{color:var(--accent)}
+.pp .nm a{color:var(--text)}
+.pp .nm a:hover{color:var(--accent)}
 .rep-name{font-weight:600}
+.rep-name a{color:var(--text);text-decoration:none}
+.rep-name a:hover{color:var(--accent)}
 .rep-outlet{font-size:.72rem;color:var(--text-secondary);font-weight:400}
 .flag{display:inline-block;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
   padding:.05rem .35rem;border-radius:4px;background:var(--orange-dim);color:var(--orange);margin-left:.4rem;vertical-align:middle}
@@ -79,27 +86,11 @@ td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
 .flag-img{vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
 .cc{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-secondary)}
 .pos{color:var(--green)}.neg{color:var(--red)}
-.pp{text-align:left;font-family:'DM Sans',sans-serif;max-width:13rem}
+table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13rem}
 .pp .nm{font-weight:500}
 .pp .dl{font-family:'JetBrains Mono',monospace;font-size:.74rem}
 .pp .sub{font-size:.66rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace}
 .dash{color:var(--text-secondary)}
-
-/* mobile cards */
-.cards{display:none}
-.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
-.card:hover{border-color:var(--accent)}
-.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;
-  color:var(--text-secondary)}
-.card-head .nm{font-weight:600;font-size:.96rem}
-.card-head .ou{font-size:.74rem;color:var(--text-secondary)}
-.card-stats{display:flex;gap:1.2rem;margin:.55rem 0 .2rem;font-family:'JetBrains Mono',monospace;font-size:.76rem}
-.card-stats .k{color:var(--text-secondary);font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;display:block}
-.card-meta{margin:.45rem 0 .1rem}
-.outlier-pill{font-family:'JetBrains Mono',monospace;font-size:.66rem;font-weight:600;padding:.1rem .45rem;border-radius:5px}
-.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
-.card-pp .lbl{display:inline-block;min-width:4.2rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 
 .empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
 .foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;
@@ -110,8 +101,9 @@ td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
   .filter-group.search{grid-column:1/-1}
   .filter-group.reset-group{grid-column:1/-1}
   .reset-btn{width:100%;padding:.35rem}
-  .table-wrap{display:none}
-  .cards{display:block}
+  /* horizontally scrollable table on narrow screens */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table.lb{min-width:780px}
   /* compact the filter panel + intro on mobile */
   .subtitle{display:none}
   .tabs{margin-bottom:.6rem}
@@ -123,7 +115,6 @@ td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
   .filter-group label{font-size:.54rem;margin-bottom:.05rem;letter-spacing:.04em}
   input[type=text],select{padding:.38rem .55rem;font-size:.8rem}
   .summary{margin:.1rem 0 .6rem;font-size:.7rem}
-  .card{padding:.6rem .75rem}
 }
 </style>
 </head>
@@ -151,10 +142,6 @@ td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
         <select id="fCountry"><option value="">All</option></select>
       </div>
       <div class="filter-group">
-        <label>Voted for award</label>
-        <select id="fAward"><option value="">Any award</option></select>
-      </div>
-      <div class="filter-group">
         <label>Active between</label>
         <div class="season-range">
           <select id="fFrom"></select>
@@ -179,7 +166,6 @@ td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
       <tbody id="body"></tbody>
     </table>
   </div>
-  <div class="cards" id="cards"></div>
   <div class="empty" id="empty" style="display:none">No reporters match those filters.</div>
 
   <div class="foot">
@@ -198,8 +184,8 @@ const COLS = [
   {key:'country', label:'Country', cls:'cn', sortable:true, type:'str'},
   {key:'n_ballots', label:'Ballots', sortable:true, type:'num', def:'desc'},
   {key:'span', label:'Span', sortable:true, type:'num'},
-  {key:'fave', label:'Most boosted', cls:'pp left', sortable:true, type:'fave'},
-  {key:'detr', label:'Most snubbed', cls:'pp left', sortable:true, type:'detr'},
+  {key:'fave', label:'Most boosted', cls:'pp', sortable:true, type:'fave'},
+  {key:'detr', label:'Most snubbed', cls:'pp', sortable:true, type:'detr'},
   {key:'outlier_rate', label:'Outlier %', sortable:true, type:'num'},
 ];
 
@@ -207,12 +193,10 @@ let sortKey='n_ballots', sortDir='desc';
 
 // filter select refs (populated after data loads)
 const fC=document.getElementById('fCountry');
-const fA=document.getElementById('fAward');
 const fFrom=document.getElementById('fFrom'),fTo=document.getElementById('fTo');
 
 function populateFilters(){
   META.countries.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;fC.appendChild(o)});
-  META.awards.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=META.award_label[a]||a;fA.appendChild(o)});
   META.seasons.forEach(s=>{
     const o1=document.createElement('option');o1.value=s;o1.textContent=s;fFrom.appendChild(o1);
     const o2=document.createElement('option');o2.value=s;o2.textContent=s;fTo.appendChild(o2);
@@ -226,14 +210,13 @@ function currentFilters(){
   const q=document.getElementById('q').value.trim().toLowerCase();
   return {
     q,
-    country:fC.value, award:fA.value,
+    country:fC.value,
     from:fFrom.value, to:fTo.value,
   };
 }
 function passes(r,f){
   if(f.q && !( (r.voter||'').toLowerCase().includes(f.q) || (r.outlet||'').toLowerCase().includes(f.q) )) return false;
   if(f.country && r.country!==f.country) return false;
-  if(f.award && !(r.awards||[]).includes(f.award)) return false;
   // active-between overlap of [first_season,last_season] with [from,to]
   if(r.last_season < f.from || r.first_season > f.to) return false;
   return true;
@@ -287,7 +270,7 @@ function render(){
     const outletLink = r.outlet? `<a href="outlet.html?o=${r.outlet_slug}" onclick="event.stopPropagation()">${esc(r.outlet)}</a>` : '';
     tr.innerHTML =
       `<td class="rank">${i+1}</td>`+
-      `<td class="rep${k('voter')}"><div class="rep-name">${esc(r.voter)}${flag}</div><div class="rep-outlet">${outletLink}</div></td>`+
+      `<td class="rep${k('voter')}"><div class="rep-name"><a href="reporter.html?v=${encodeURIComponent(r.slug)}" onclick="event.stopPropagation()">${esc(r.voter)}</a>${flag}</div><div class="rep-outlet">${outletLink}</div></td>`+
       `<td class="cn${k('country')}" title="${esc(r.country||'')}">${flagEmoji(r.country)}</td>`+
       `<td class="${k('n_ballots')}">${r.n_ballots}</td>`+
       `<td class="${k('span')}">${r.first_season.slice(0,4)}–${r.last_season.slice(-2)}<br><span class="sub">${r.n_seasons} yr</span></td>`+
@@ -295,24 +278,6 @@ function render(){
       `<td class="pp${k('detr')}">${detr}</td>`+
       `<td class="${k('outlier_rate')}" style="${outlierStyle(r.outlier_rate)}">${Math.round(r.outlier_rate*100)}%</td>`;
     body.appendChild(tr);
-  });
-
-  // cards (mobile)
-  const cards=document.getElementById('cards'); cards.innerHTML='';
-  list.forEach((r,i)=>{
-    const div=document.createElement('div'); div.className='card';
-    div.onclick=()=>{ window.location.href='reporter.html?v='+encodeURIComponent(r.slug); };
-    const fave = r.fave? `<span class="nm"><a href="player.html?p=${r.fave.slug}" onclick="event.stopPropagation()">${esc(r.fave.player)}</a></span> <span class="pos">+${r.fave.diff.toFixed(1)}</span> <span class="sub">(${r.fave.n}b)</span>`:'—';
-    const detr = r.detr? `<span class="nm"><a href="player.html?p=${r.detr.slug}" onclick="event.stopPropagation()">${esc(r.detr.player)}</a></span> <span class="neg">${r.detr.diff.toFixed(1)}</span> <span class="sub">(${r.detr.n}b)</span>`:'—';
-    const flag = r.low_sample? '<span class="flag">&lt;3 yr</span>':'';
-    const outletLink = r.outlet? `<a href="outlet.html?o=${r.outlet_slug}" onclick="event.stopPropagation()">${esc(r.outlet)}</a>` : '';
-    div.innerHTML =
-      `<div class="card-rank">#${i+1}</div>`+
-      `<div class="card-head"><div class="nm">${esc(r.voter)}${flag}</div><div class="ou">${outletLink}${r.country?' '+flagEmoji(r.country):''}</div></div>`+
-      `<div class="card-meta"><span class="outlier-pill" style="${outlierStyle(r.outlier_rate)}">${Math.round(r.outlier_rate*100)}% outlier</span></div>`+
-      `<div class="card-pp"><span class="lbl">Boosted</span> ${fave}</div>`+
-      `<div class="card-pp"><span class="lbl">Snubbed</span> ${detr}</div>`;
-    cards.appendChild(div);
   });
 }
 function k(key){return key===sortKey?' sorted-by':'';}
@@ -334,13 +299,13 @@ function outlierStyle(rate){
   return `background-color:hsl(${hue},70%,70%);color:hsl(${hue},85%,17%);font-weight:600`;
 }
 
-['q','fCountry','fAward','fFrom','fTo'].forEach(id=>{
+['q','fCountry','fFrom','fTo'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener(id==='q'?'input':'change', render);
 });
 document.getElementById('reset').onclick=()=>{
   document.getElementById('q').value='';
-  fC.value=''; fA.value=''; fFrom.value=META.seasons[0]; fTo.value=META.seasons[META.seasons.length-1];
+  fC.value=''; fFrom.value=META.seasons[0]; fTo.value=META.seasons[META.seasons.length-1];
   sortKey='n_ballots'; sortDir='desc'; render();
 };
 
