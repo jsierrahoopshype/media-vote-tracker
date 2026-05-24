@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporter Profile — Media Vote Tracker | HoopsMatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface-hover:#f0f0f2;--border:#d1d1d6;
+  --text:#1d1d1f;--text-secondary:#6e6e73;--accent:#3b82f6;--accent-dim:rgba(59,130,246,.15);
+  --green:#1d8a40;--green-bar:#34c759;--red:#d12c2c;--red-bar:#ef4444;--orange:#b26b00;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);
+  color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.container{max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.back{font-size:.78rem;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);
+  display:inline-block;margin-bottom:1rem}
+.back:hover{color:var(--accent);text-decoration:none}
+
+/* header */
+.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.2rem}
+.phead h1{font-size:1.7rem;font-weight:700;letter-spacing:-.03em;display:flex;align-items:center;gap:.5rem}
+.phead .outlet{color:var(--text-secondary);font-size:.92rem;margin-top:.15rem}
+.flag-img{vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
+.flag-lg{height:20px}
+.flag-sm{height:12px;margin-left:.3rem}
+.flag-badge{font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  padding:.1rem .4rem;border-radius:5px;background:rgba(245,158,11,.16);color:var(--orange);vertical-align:middle}
+.statline{display:flex;gap:1.6rem;flex-wrap:wrap;font-family:'JetBrains Mono',monospace}
+.statline .stat{text-align:right}
+.statline .num{font-size:1.3rem;font-weight:600}
+.statline .lbl{font-size:.6rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em}
+.heat{display:inline-block;padding:.1rem .45rem;border-radius:5px;font-weight:600}
+
+/* section */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:1.1rem 1.2rem;margin-bottom:1.1rem}
+.section h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);
+  font-weight:600;margin-bottom:.2rem}
+.section .hint{font-size:.74rem;color:var(--text-secondary);margin-bottom:.9rem}
+
+/* award toggle */
+.toggle{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem}
+.toggle button{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;
+  padding:.32rem .6rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);
+  color:var(--text-secondary);cursor:pointer;transition:.12s}
+.toggle button:hover{border-color:var(--accent);color:var(--accent)}
+.toggle button.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+
+/* diverging bars */
+.board{display:flex;flex-direction:column;gap:.18rem}
+.row{display:grid;grid-template-columns:13rem 1fr 4.5rem;align-items:center;gap:.6rem;
+  padding:.12rem 0;font-size:.84rem}
+.row .pl{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pl a{font-weight:500;color:var(--text)}
+.row .pl .tm{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary);margin-left:.3rem}
+.row .barwrap{position:relative;height:1.4rem;background:linear-gradient(90deg,transparent 49.7%,var(--border) 49.7%,var(--border) 50.3%,transparent 50.3%)}
+.row .bar{position:absolute;top:.25rem;height:.9rem;border-radius:3px}
+.row .bar.pos{left:50%;background:var(--green-bar)}
+.row .bar.neg{right:50%;background:var(--red-bar)}
+.row .val{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600;text-align:left}
+.row .val.pos{color:var(--green)}.row .val.neg{color:var(--red)}
+.row .val .sub{display:block;font-size:.6rem;color:var(--text-secondary);font-weight:400}
+.showmore{margin-top:.8rem;font-size:.74rem;font-family:'JetBrains Mono',monospace;
+  background:none;border:none;color:var(--accent);cursor:pointer}
+.showmore:hover{text-decoration:underline}
+
+/* aligned/foils + outlets two-col */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem}
+@media(max-width:740px){.cols{grid-template-columns:1fr}}
+.minilist{display:flex;flex-direction:column;gap:.35rem}
+.mini{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-size:.82rem;
+  padding:.3rem .5rem;border-radius:6px;background:var(--bg)}
+.mini .nm{font-weight:500}.mini .nm a{color:var(--text)}
+.mini .sim{font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--text-secondary)}
+.mini .simbar{display:inline-block;height:.5rem;border-radius:3px;background:var(--accent);vertical-align:middle;margin-right:.4rem}
+.outlets{font-size:.84rem;line-height:1.9}
+.outlets .yr{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary)}
+
+.note{font-size:.7rem;color:var(--text-secondary);margin-top:.6rem;font-style:italic}
+
+/* every-ballot section */
+.award-block{margin-bottom:1.8rem}
+.award-h{font-size:1.35rem;font-weight:700;letter-spacing:-.025em;margin-bottom:.7rem;
+  padding-bottom:.4rem;border-bottom:2px solid var(--text);display:flex;align-items:baseline;gap:.5rem}
+.award-h .ct{font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:500;
+  color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
+.ballot{margin-bottom:1rem}
+.ballot-season{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;
+  color:var(--text);margin-bottom:.35rem;display:flex;align-items:baseline;gap:.5rem}
+.ballot-season .ct{font-weight:400;font-size:.66rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em}
+.ballot-picks{display:flex;flex-direction:column;gap:.1rem;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tier-div{font-family:'JetBrains Mono',monospace;font-size:.64rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--text-secondary);
+  background:var(--surface-hover);padding:.3rem .6rem;border-top:1px solid var(--border)}
+.tier-div:first-child{border-top:none}
+.pick{display:grid;grid-template-columns:2.6rem 1fr auto;align-items:center;gap:.5rem;
+  padding:.4rem .6rem;font-size:.86rem}
+.pick .slot{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-secondary);font-weight:600}
+.pick .pname{font-weight:500;color:var(--text)}
+.pick .pdiff{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;color:var(--text)}
+.pick .pavg{font-weight:400;color:var(--text-secondary);font-size:.64rem;margin-left:.35rem}
+@media(max-width:560px){
+  .pick{grid-template-columns:2.2rem 1fr;row-gap:.05rem}
+  .pick .pdiff{grid-column:2;text-align:left}
+}
+.outlier-stat .lbl{font-weight:600;color:var(--text);font-size:.6rem}
+
+/* per-award champions / snubs footer */
+.award-extremes{margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--border);
+  display:flex;flex-direction:column;gap:.4rem}
+.ex-line{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.ex-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.ex-lbl.ex-up{color:var(--green)}
+.ex-lbl.ex-dn{color:var(--red)}
+.ex-chip{font-size:.78rem;padding:.18rem .5rem;border-radius:20px;font-weight:500}
+.ex-chip.up{background:var(--green-dim);color:var(--green)}
+.ex-chip.dn{background:var(--red-dim);color:var(--red)}
+.ex-chip b{font-family:'JetBrains Mono',monospace;font-weight:700}
+.foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;
+  font-family:'JetBrains Mono',monospace;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← All reporters</a>
+  <div id="app"></div>
+  <div class="foot">
+    Support = a voter's points for a player minus what the rest of that season's panel averaged, summed across shared ballots.<br>
+    Alignment = average cosine similarity of ballots in shared award-seasons. Higher = voted more alike.
+  </div>
+</div>
+
+<script>
+const AWARD_LABEL = {"MVP": "MVP", "DPOY": "DPOY", "MIP": "MIP", "SMOY": "6th Man", "COY": "Coach", "ROY": "ROY", "CPOY": "Clutch", "ALL_NBA": "All-NBA", "ALL_DEF": "All-Def", "ALL_ROOKIE": "All-Rookie"};
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+function flagImg(c,cls){const code=ISO[c];if(!code) return c&&c!=='n/a'?`<span class="cc">${esc(c)}</span>`:'';
+  return `<img class="flag-img ${cls}" src="https://flagcdn.com/h40/${code}.png" alt="${esc(c)}" title="${esc(c)}">`;}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function heatStyle(rate){const t=Math.max(0,Math.min(1,rate/0.10));const h=120*(1-t);
+  return `background-color:hsl(${h},70%,70%);color:hsl(${h},85%,17%)`;}
+
+// outlier adjective bands (based on the distribution across all voters)
+function outlierLabel(rate){
+  if(rate<0.02) return 'Pure consensus';
+  if(rate<0.045) return 'Consensus-leaning';
+  if(rate<0.08) return 'Balanced';
+  if(rate<0.13) return 'Contrarian-leaning';
+  return 'Strong contrarian';
+}
+// full-row gradient for a pick's diff: deep green (>=+4) -> white (0) -> deep red (<=-4)
+function pickRowStyle(diff){
+  const t=Math.max(-1,Math.min(1, diff/4));   // clamp to [-1,1]
+  if(Math.abs(t)<0.02) return '';              // ~zero: no tint
+  const h = t>0 ? 120 : 0;                      // green vs red
+  const intensity=Math.abs(t);                  // 0..1
+  const sat=70, light=96-intensity*26;          // 96% -> 70% lightness
+  return `background-color:hsl(${h},${sat}%,${light}%)`;
+}
+
+let DATA=null, curAward='ALL', expanded=false;
+
+function load(){
+  const params=new URLSearchParams(location.search);
+  const slug=params.get('v');
+  if(!slug){ document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">No reporter specified. <a href="index.html">Back to directory.</a></p>'; return; }
+  fetch(`./data/reporter/${slug}.json`).then(r=>{
+    if(!r.ok) throw new Error('not found'); return r.json();
+  }).then(d=>{DATA=d; render();}).catch(()=>{
+    document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">Reporter not found. <a href="index.html">Back to directory.</a></p>';
+  });
+}
+
+function boardForAward(){
+  // recompute the board for the selected award using per-award diffs
+  if(curAward==='ALL') return DATA.board.map(b=>({player:b.player,team:b.team,diff:b.diff,n:b.n}));
+  return DATA.board
+    .filter(b=>b.by_award && b.by_award[curAward])
+    .map(b=>({player:b.player,team:b.team,diff:b.by_award[curAward].diff,n:b.by_award[curAward].n}))
+    .sort((a,b)=>b.diff-a.diff);
+}
+
+function render(){
+  const d=DATA;
+  const flagBig=flagImg(d.outlet_history.length?d.outlet_history[d.outlet_history.length-1].country:'','flag-lg');
+  const latestOutlet=d.outlet_history.length?d.outlet_history[d.outlet_history.length-1].outlet:'';
+  const firstYr=d.seasons[0].slice(0,4);
+  const lastYr=String(parseInt(d.seasons[d.seasons.length-1].slice(0,4))+1);
+  const span=`${firstYr}–${lastYr}`;
+  const lowFlag=d.low_sample?'<span class="flag-badge">&lt;3 yr sample</span>':'';
+
+  let html=`
+  <div class="phead">
+    <div>
+      <h1>${esc(d.voter)} ${flagBig} ${lowFlag}</h1>
+      <div class="outlet">${esc(latestOutlet)}</div>
+    </div>
+    <div class="statline">
+      <div class="stat"><div class="num">${d.n_ballots}</div><div class="lbl">Ballots</div></div>
+      <div class="stat"><div class="num">${d.n_seasons}</div><div class="lbl">Seasons</div></div>
+      <div class="stat"><div class="num">${span}</div><div class="lbl">Span</div></div>
+      <div class="stat outlier-stat"><div class="num"><span class="heat" style="${heatStyle(d.outlier_rate)}">${Math.round(d.outlier_rate*100)}%</span></div><div class="lbl">${outlierLabel(d.outlier_rate)}</div></div>
+    </div>
+  </div>`;
+
+  // award toggle
+  const awards=['ALL'].concat(d.awards);
+  html+=`<div class="section">
+    <h2>Champions & snubs</h2>
+    <div class="hint">Players this reporter rated furthest above (green) or below (red) the rest of the panel that voted those same seasons. Toggle by award.</div>
+    <div class="toggle" id="toggle">`;
+  awards.forEach(a=>{
+    html+=`<button data-a="${a}" class="${a===curAward?'active':''}">${a==='ALL'?'All awards':(AWARD_LABEL[a]||a)}</button>`;
+  });
+  html+=`</div><div class="board" id="board"></div>
+    <button class="showmore" id="showmore"></button>
+  </div>`;
+
+  // aligned / foils
+  html+=`<div class="section"><div class="cols">
+    <div>
+      <h2>Most-aligned voters</h2>
+      <div class="hint">Voted most alike across shared award-seasons.</div>
+      <div class="minilist">${miniList(d.twins)}</div>
+    </div>
+    <div>
+      <h2>Least-aligned voters</h2>
+      <div class="hint">Voted least alike (still positive — no true opposites exist).</div>
+      <div class="minilist">${miniList(d.foils)}</div>
+    </div>
+  </div></div>`;
+
+  // outlet history
+  html+=`<div class="section"><h2>Outlet history</h2><div class="outlets">`;
+  d.outlet_history.forEach(o=>{
+    const yrs = (o.seasons||[]).map(s=>s.slice(0,4)).join(', ');
+    html+=`<div>${esc(o.outlet)} ${flagImg(o.country,'flag-sm')} <span class="yr">(${yrs})</span></div>`;
+  });
+  html+=`</div></div>`;
+
+  // all ballots, grouped by award
+  html+=`<div class="section"><h2>Every ballot</h2>
+    <div class="hint">Each pick flagged green where this voter rated the player above the panel average that season, red where below.</div>
+    <div id="ballots"></div></div>`;
+
+  document.getElementById('app').innerHTML=html;
+
+  document.querySelectorAll('#toggle button').forEach(b=>{
+    b.onclick=()=>{curAward=b.dataset.a;expanded=false;render();};
+  });
+  renderBoard();
+  renderBallots();
+}
+
+const AWARD_FULL={MVP:'Most Valuable Player',ALL_NBA:'All-NBA',DPOY:'Defensive Player of the Year',
+  ALL_DEF:'All-Defensive',ROY:'Rookie of the Year',ALL_ROOKIE:'All-Rookie',MIP:'Most Improved Player',
+  SMOY:'Sixth Man of the Year',CPOY:'Clutch Player of the Year',COY:'Coach of the Year'};
+const TIER_FULL={'1st':'1st Team','2nd':'2nd Team','3rd':'3rd Team'};
+
+function renderBallots(){
+  const el=document.getElementById('ballots');
+  if(!el) return;
+  const ballots=DATA.ballots||[];
+  const order=[]; const byAward={};
+  ballots.forEach(b=>{ if(!byAward[b.award]){byAward[b.award]=[];order.push(b.award);} byAward[b.award].push(b); });
+
+  let html='';
+  order.forEach(award=>{
+    const list=byAward[award];
+    const isTeam=(award==='ALL_NBA'||award==='ALL_DEF'||award==='ALL_ROOKIE');
+    html+=`<div class="award-block"><div class="award-h">${esc(AWARD_FULL[award]||award)}<span class="ct">${list.length} ballot${list.length>1?'s':''}</span></div>`;
+    list.forEach(b=>{
+      html+=`<div class="ballot"><div class="ballot-season">${esc(b.season)}<span class="ct">${b.n_voters} voters</span></div><div class="ballot-picks">`;
+      let lastTier=null;
+      b.picks.forEach(p=>{
+        // team divider when tier changes
+        if(isTeam && p.slot!==lastTier){
+          html+=`<div class="tier-div">${TIER_FULL[p.slot]||p.slot}</div>`;
+          lastTier=p.slot;
+        }
+        const sign=p.diff>0?'+':'';
+        const slotLabel=isTeam?'':`#${p.slot}`;
+        html+=`<div class="pick" style="${pickRowStyle(p.diff)}">`+
+          (slotLabel?`<span class="slot">${slotLabel}</span>`:`<span class="slot"></span>`)+
+          `<a class="pname" href="player.html?p=${p.slug}">${esc(p.player)}</a>`+
+          `<span class="pdiff">${sign}${p.diff.toFixed(1)}<span class="pavg">vs ${p.avg.toFixed(1)} avg</span></span>`+
+          `</div>`;
+      });
+      html+=`</div></div>`;
+    });
+    // per-award champions/snubs footer
+    const ex=(DATA.award_extremes||{})[award];
+    if(ex && (ex.champs.length||ex.snubs.length)){
+      html+=`<div class="award-extremes">`;
+      if(ex.champs.length){
+        html+=`<div class="ex-line"><span class="ex-lbl ex-up">Most championed</span>`+
+          ex.champs.map(c=>`<span class="ex-chip up">${esc(c.player)} <b>+${c.diff.toFixed(1)}</b></span>`).join('')+`</div>`;
+      }
+      if(ex.snubs.length){
+        html+=`<div class="ex-line"><span class="ex-lbl ex-dn">Most snubbed</span>`+
+          ex.snubs.map(c=>`<span class="ex-chip dn">${esc(c.player)} <b>${c.diff.toFixed(1)}</b></span>`).join('')+`</div>`;
+      }
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  el.innerHTML=html;
+}
+
+function miniList(arr){
+  if(!arr||!arr.length) return '<div class="hint">Not enough shared ballots.</div>';
+  const maxSim=Math.max(...arr.map(x=>x.sim));
+  return arr.map(t=>{
+    const w=Math.round((t.sim/ (maxSim||1))*46)+4;
+    return `<div class="mini"><span class="nm"><a href="reporter.html?v=${t.slug}">${esc(t.voter)}</a></span>`+
+      `<span class="sim"><span class="simbar" style="width:${w}px"></span>${t.sim.toFixed(2)} · ${t.n}</span></div>`;
+  }).join('');
+}
+
+function renderBoard(){
+  let board=boardForAward();
+  // split into supporters (>0) and detractors (<0); show top N each unless expanded
+  const N=12;
+  const pos=board.filter(b=>b.diff>0);
+  const neg=board.filter(b=>b.diff<0).reverse(); // most negative first
+  let show;
+  if(expanded){ show=board; }
+  else { show=pos.slice(0,N).concat(neg.slice(0,N).reverse()); }
+  const maxAbs=Math.max(1,...board.map(b=>Math.abs(b.diff)));
+
+  const el=document.getElementById('board');
+  el.innerHTML=show.map(b=>{
+    const pct=Math.abs(b.diff)/maxAbs*100;
+    const bar=b.diff>=0?`<div class="bar pos" style="width:${pct/2}%"></div>`
+                       :`<div class="bar neg" style="width:${pct/2}%"></div>`;
+    const cls=b.diff>=0?'pos':'neg';
+    const sign=b.diff>=0?'+':'';
+    const perB=b.n?(b.diff/b.n):0;
+    return `<div class="row">
+      <div class="pl"><a href="player.html?p=${slugify(b.player)}">${esc(b.player)}</a></div>
+      <div class="barwrap">${bar}</div>
+      <div class="val ${cls}">${sign}${b.diff.toFixed(1)}<span class="sub">${sign}${perB.toFixed(1)}/b · ${b.n}b</span></div>
+    </div>`;
+  }).join('');
+
+  const sm=document.getElementById('showmore');
+  const total=board.length;
+  if(total>2*N){ sm.style.display='block'; sm.textContent=expanded?'Show less':`Show all ${total} players`; sm.onclick=()=>{expanded=!expanded;renderBoard();}; }
+  else sm.style.display='none';
+}
+
+function slugify(name){return name.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();}
+
+load();
+</script>
+</body>
+</html>

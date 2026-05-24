@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outlet Profile — Media Vote Tracker | HoopsMatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface-hover:#f0f0f2;--border:#d1d1d6;
+  --text:#1d1d1f;--text-secondary:#6e6e73;--accent:#3b82f6;--accent-dim:rgba(59,130,246,.15);
+  --green:#1d8a40;--green-bar:#34c759;--red:#d12c2c;--red-bar:#ef4444;--orange:#b26b00;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);
+  color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.container{max-width:1100px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.back{font-size:.78rem;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);display:inline-block;margin-bottom:1rem}
+.back:hover{color:var(--accent);text-decoration:none}
+.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.2rem}
+.phead h1{font-size:1.7rem;font-weight:700;letter-spacing:-.03em;display:flex;align-items:center;gap:.5rem}
+.flag-img{height:20px;vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
+.statline{display:flex;gap:1.6rem;flex-wrap:wrap;font-family:'JetBrains Mono',monospace}
+.statline .stat{text-align:right}
+.statline .num{font-size:1.3rem;font-weight:600}
+.statline .lbl{font-size:.6rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.2rem;margin-bottom:1.1rem}
+.section h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);font-weight:600;margin-bottom:.2rem}
+.section .hint{font-size:.74rem;color:var(--text-secondary);margin-bottom:.9rem}
+.reps{display:flex;flex-wrap:wrap;gap:.4rem}
+.rep-chip{font-size:.8rem;padding:.22rem .6rem;border-radius:20px;background:var(--bg);border:1px solid var(--border)}
+.rep-chip a{color:var(--text);font-weight:500}
+.rep-chip .yr{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--text-secondary);margin-left:.25rem}
+/* toggle */
+.toggle{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem}
+.toggle button{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;padding:.32rem .6rem;
+  border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-secondary);cursor:pointer;transition:.12s}
+.toggle button:hover{border-color:var(--accent);color:var(--accent)}
+.toggle button.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+/* award/season blocks */
+.award-block{margin-bottom:1.6rem}
+.award-h{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.6rem;padding-bottom:.35rem;border-bottom:2px solid var(--text)}
+.season-block{margin-bottom:.9rem}
+.season-h{font-family:'JetBrains Mono',monospace;font-size:.92rem;font-weight:700;margin-bottom:.35rem;display:flex;align-items:baseline;gap:.5rem}
+.season-h .ct{font-weight:400;font-size:.64rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em}
+.picks{display:flex;flex-direction:column;gap:.1rem;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.pk{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:.8rem;padding:.38rem .7rem;font-size:.84rem}
+.pk .pn{font-weight:500}.pk .pn a{color:var(--text)}
+.pk .avgs{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary);white-space:nowrap}
+.pk .df{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;text-align:right;min-width:3rem}
+.pk .df.pos{color:var(--green)}.pk .df.neg{color:var(--red)}
+.only-diff-note{font-size:.7rem;color:var(--text-secondary);margin-bottom:.5rem;font-style:italic}
+.foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
+@media(max-width:560px){.pk{grid-template-columns:1fr auto;row-gap:.1rem}.pk .avgs{grid-column:1;font-size:.64rem}}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back" href="index.html">← All reporters</a>
+  <div id="app"></div>
+  <div class="foot">
+    Aggregate = the average points this outlet's voters gave each player that season, vs the overall panel average.<br>
+    Green = the outlet rated the player higher than the field; red = lower. Pools every reporter listed at the outlet that season.
+  </div>
+</div>
+<script>
+const AWARD_FULL={"MVP": "Most Valuable Player", "DPOY": "Defensive Player of the Year", "MIP": "Most Improved Player", "SMOY": "Sixth Man of the Year", "COY": "Coach of the Year", "ROY": "Rookie of the Year", "CPOY": "Clutch Player of the Year", "ALL_NBA": "All-NBA", "ALL_DEF": "All-Defensive", "ALL_ROOKIE": "All-Rookie"};
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+function flagImg(c){const code=ISO[c];return code?`<img class="flag-img" src="https://flagcdn.com/h40/${code}.png" alt="${esc(c)}" title="${esc(c)}">`:'';}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let DATA=null, onlyDiff=true;
+
+function load(){
+  const slug=new URLSearchParams(location.search).get('o');
+  if(!slug){document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">No outlet specified. <a href="index.html">Back.</a></p>';return;}
+  fetch(`./data/outlet/${slug}.json`).then(r=>{if(!r.ok)throw 0;return r.json();})
+    .then(d=>{DATA=d;render();})
+    .catch(()=>{document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">Outlet not found. <a href="index.html">Back.</a></p>';});
+}
+
+function render(){
+  const d=DATA;
+  const span=d.first_season?`${d.first_season.slice(0,4)}–${String(parseInt(d.last_season.slice(0,4))+1)}`:'';
+  let html=`
+  <div class="phead">
+    <div><h1>${esc(d.outlet)} ${flagImg(d.country)}</h1></div>
+    <div class="statline">
+      <div class="stat"><div class="num">${d.n_reporters}</div><div class="lbl">Reporters</div></div>
+      <div class="stat"><div class="num">${d.n_ballots}</div><div class="lbl">Ballots</div></div>
+      <div class="stat"><div class="num">${span}</div><div class="lbl">Span</div></div>
+    </div>
+  </div>`;
+
+  // reporters
+  html+=`<div class="section"><h2>Reporters at this outlet</h2><div class="reps">`;
+  html+=d.reporters.map(r=>{
+    const yr=r.first===r.last?r.first.slice(0,4):`${r.first.slice(0,4)}–${r.last.slice(-2)}`;
+    return `<span class="rep-chip"><a href="reporter.html?v=${r.slug}">${esc(r.voter)}</a><span class="yr">${yr}</span></span>`;
+  }).join('');
+  html+=`</div></div>`;
+
+  // aggregate record
+  const awards=d.awards.map(a=>a.award);
+  html+=`<div class="section">
+    <h2>Collective voting record vs the panel</h2>
+    <div class="hint">How this outlet's voters, on average, rated each player against the overall panel. Toggle "show all" to include picks where the outlet matched consensus.</div>
+    <div class="toggle" id="dtoggle">
+      <button data-d="1" class="active">Only where they differed</button>
+      <button data-d="0">Show all picks</button>
+    </div>
+    <div id="record"></div>
+  </div>`;
+
+  document.getElementById('app').innerHTML=html;
+  document.querySelectorAll('#dtoggle button').forEach(b=>b.onclick=()=>{
+    onlyDiff=b.dataset.d==='1';
+    document.querySelectorAll('#dtoggle button').forEach(x=>x.classList.toggle('active',x.dataset.d===b.dataset.d));
+    renderRecord();
+  });
+  renderRecord();
+}
+
+function renderRecord(){
+  const el=document.getElementById('record');
+  let html='';
+  DATA.awards.forEach(ab=>{
+    let awardHtml='';
+    ab.seasons.forEach(blk=>{
+      let picks=blk.picks;
+      if(onlyDiff) picks=picks.filter(p=>Math.abs(p.diff)>=0.3);  // hide near-identical
+      if(!picks.length) return;
+      awardHtml+=`<div class="season-block"><div class="season-h">${esc(blk.season)} <span class="ct">${blk.n_voters} voter${blk.n_voters>1?'s':''}</span></div><div class="picks">`;
+      picks.forEach(p=>{
+        const cls=p.diff>0?'pos':(p.diff<0?'neg':'');
+        const sign=p.diff>0?'+':'';
+        awardHtml+=`<div class="pk" style="${rowStyle(p.diff)}">`+
+          `<span class="pn"><a href="player.html?p=${p.slug}">${esc(p.player)}</a></span>`+
+          `<span class="avgs">${p.outlet_avg} vs ${p.panel_avg} panel</span>`+
+          `<span class="df ${cls}">${sign}${p.diff.toFixed(1)}</span></div>`;
+      });
+      awardHtml+=`</div></div>`;
+    });
+    if(awardHtml){
+      html+=`<div class="award-block"><div class="award-h">${esc(AWARD_FULL[ab.award]||ab.award)}</div>${awardHtml}</div>`;
+    }
+  });
+  el.innerHTML=html||'<div class="hint">No differences from consensus to show. Toggle "Show all picks".</div>';
+}
+function rowStyle(diff){
+  const t=Math.max(-1,Math.min(1,diff/4));
+  if(Math.abs(t)<0.02) return '';
+  const h=t>0?120:0, light=96-Math.abs(t)*26;
+  return `background-color:hsl(${h},70%,${light}%)`;
+}
+load();
+</script>
+</body>
+</html>

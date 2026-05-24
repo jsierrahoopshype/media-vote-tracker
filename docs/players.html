@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Players — Media Vote Tracker | HoopsMatic</title>
+<meta name="description" content="Every player and coach who received an NBA award vote since 2014, ranked by total vote points, with their biggest booster and snubber.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface-hover:#f0f0f2;--border:#d1d1d6;
+  --text:#1d1d1f;--text-secondary:#6e6e73;--accent:#3b82f6;--accent-dim:rgba(59,130,246,.15);
+  --green:#1d8a40;--red:#d12c2c;--orange:#b26b00;--orange-dim:rgba(178,107,0,.13);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.container{max-width:1400px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.tabs{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap}
+.tabs a{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:600;padding:.4rem .8rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary)}
+.tabs a:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.tabs a.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.35rem;flex-wrap:wrap}
+.hdr h1{font-size:1.4rem;font-weight:700;letter-spacing:-.03em}
+.hdr .brand{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em}
+.subtitle{color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;max-width:60rem}
+.filters{position:sticky;top:0;z-index:100;background:var(--bg);padding:.6rem 0 .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border)}
+.filter-row{display:grid;grid-template-columns:2fr 1.1fr auto;gap:.6rem;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.filter-group label{font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+input[type=text],select{width:100%;padding:.5rem .8rem;font-size:.85rem;font-family:inherit;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);transition:.15s}
+input[type=text]:hover,select:hover{border-color:var(--accent)}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.reset-btn{padding:.5rem .8rem;font-size:.72rem;font-family:inherit;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);cursor:pointer;transition:.15s;white-space:nowrap}
+.reset-btn:hover{color:var(--text);border-color:var(--text-secondary);background:var(--surface-hover)}
+.summary{font-size:.74rem;color:var(--text-secondary);margin:.1rem 0 .9rem}
+.summary strong{color:var(--text);font-weight:600}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table.lb{width:100%;border-collapse:collapse;font-size:.86rem}
+table.lb thead th{background:var(--surface-hover);color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;font-size:.66rem;font-weight:600;padding:.7rem .6rem;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+table.lb thead th:hover{color:var(--accent)}
+table.lb thead th.sorted-by{background:var(--accent-dim);color:var(--accent);font-weight:700}
+table.lb thead th.left{text-align:left}
+table.lb thead th .arr{font-size:.6rem;opacity:.7;margin-left:.15rem}
+table.lb tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+table.lb tbody tr:last-child{border-bottom:none}
+table.lb tbody tr:hover{background:var(--surface-hover)}
+table.lb td{padding:.55rem .6rem;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap}
+table.lb td.sorted-by{background:rgba(59,130,246,.05)}
+td.rank{color:var(--text-secondary);font-size:.78rem;width:2.4rem}
+table.lb td.pl{text-align:left;font-family:'DM Sans',sans-serif;max-width:16rem}
+.pl-name{font-weight:600}
+.flag-img{vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18);margin-left:.45rem;height:13px}
+.cc{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary);margin-left:.4rem}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:14rem}
+.pp .nm{font-weight:500}
+.pp .nm a{color:var(--text)}
+.pp .nm a:hover{color:var(--accent)}
+.pp .dl{font-family:'JetBrains Mono',monospace;font-size:.74rem}
+.pp .ol{display:block;font-size:.64rem;color:var(--text-secondary);font-family:'DM Sans',sans-serif;margin-top:.05rem}
+.dash{color:var(--text-secondary)}
+.cards{display:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary)}
+.card-head .nm{font-weight:600;font-size:.96rem}
+.card-head .meta{font-size:.72rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;margin-top:.1rem}
+.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
+.card-pp .lbl{display:inline-block;min-width:4.4rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card-pp a{color:var(--text)}
+.card-pp a:hover{color:var(--accent)}
+.ol-inline{font-size:.66rem;color:var(--text-secondary)}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
+.foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
+@media(max-width:860px){
+  .filter-row{grid-template-columns:1fr 1fr;gap:.4rem}
+  .filter-group.search{grid-column:1/-1}
+  .filter-group.reset-group{grid-column:1/-1}
+  .reset-btn{width:100%;padding:.35rem}
+  .table-wrap{display:none}.cards{display:block}
+  .subtitle{display:none}
+  .tabs{margin-bottom:.6rem}.tabs a{padding:.3rem .65rem;font-size:.68rem}
+  .hdr{margin-bottom:.5rem}.hdr h1{font-size:1.15rem}.hdr .brand{display:none}
+  .filters{padding:.3rem 0 .5rem}
+  .filter-group label{font-size:.54rem;margin-bottom:.05rem}
+  input[type=text],select{padding:.38rem .55rem;font-size:.8rem}
+  .summary{margin:.1rem 0 .6rem;font-size:.7rem}
+  .card{padding:.6rem .75rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="tabs">
+    <a href="index.html">Reporters</a>
+    <a href="players.html" class="active">Players</a>
+    <a href="outlets.html">Outlets</a>
+  </div>
+  <div class="hdr"><h1>NBA Award Voting</h1><span class="brand">HoopsMatic · Media Vote Tracker</span></div>
+  <p class="subtitle">Every player and coach who received an NBA award vote since 2013-14, ranked by total weighted vote points. Each shows the voter who boosted them most and snubbed them most, measured against the rest of the panel.</p>
+
+  <div class="filters"><div class="filter-row">
+    <div class="filter-group search"><label>Search player</label><input type="text" id="q" placeholder="e.g. Jokic, Curry, Embiid…" autocomplete="off"></div>
+    <div class="filter-group"><label>Country</label><select id="fCountry"><option value="">All</option></select></div>
+    <div class="filter-group reset-group"><label>&nbsp;</label><button class="reset-btn" id="reset">Reset</button></div>
+  </div></div>
+
+  <div class="summary" id="summary"></div>
+  <div class="table-wrap"><table class="lb"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div>
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none">No players match.</div>
+  <div class="foot">Support = a voter's points for a player minus the rest of that season's panel average, summed across shared ballots. Click any player, booster, or snubber.</div>
+</div>
+<script>
+let PLAYERS=[];
+const COLS=[
+  {key:'rank',label:'#',cls:'rank',sortable:false},
+  {key:'player',label:'Player',cls:'pl left',sortable:true,type:'str'},
+  {key:'total_pts',label:'Vote pts',sortable:true,type:'num',def:'desc'},
+  {key:'top_sup',label:'Most boosted by',cls:'pp',sortable:true,type:'sup'},
+  {key:'top_snub',label:'Most snubbed by',cls:'pp',sortable:true,type:'snub'},
+];
+let sortKey='total_pts',sortDir='desc';
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function k(key){return key===sortKey?' sorted-by':'';}
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',
+  Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar',Serbia:'rs',Slovenia:'si',
+  Greece:'gr',Cameroon:'cm',Lithuania:'lt',Croatia:'hr',Latvia:'lv','Czech Republic':'cz',Turkey:'tr',
+  Nigeria:'ng',Switzerland:'ch',Austria:'at',Finland:'fi',Japan:'jp','South Sudan':'ss',Bahamas:'bs',
+  'Dominican Republic':'do',Jamaica:'jm','Democratic Republic of the Congo':'cd',Senegal:'sn',Mali:'ml',
+  Sweden:'se',Montenegro:'me','Bosnia and Herzegovina':'ba',Ukraine:'ua',Israel:'il',Egypt:'eg',
+  Georgia:'ge','New Zealand':'nz',Portugal:'pt',Angola:'ao',Tunisia:'tn',Guinea:'gn',Poland:'pl',
+  Russia:'ru',Belgium:'be',Netherlands:'nl',Ireland:'ie','United Kingdom':'gb'};
+function flag(c){
+  if(!c||c==='n/a')return '';
+  // data now provides a 2-letter ISO code directly; fall back to name map if needed
+  const code=(c.length===2)?c.toLowerCase():ISO[c];
+  if(!code)return `<span class="cc">${esc(c)}</span>`;
+  return `<img class="flag-img" src="https://flagcdn.com/h20/${code}.png" srcset="https://flagcdn.com/h40/${code}.png 2x" height="13" alt="${esc(c)}" title="${esc(c)}" loading="lazy">`;}
+function sortVal(r,key){
+  if(key==='player')return r.player.toLowerCase();
+  if(key==='top_sup')return r.top_sup?r.top_sup.diff:-1e9;
+  if(key==='top_snub')return r.top_snub?r.top_snub.diff:1e9;
+  return r[key]!=null?r[key]:-1e9;
+}
+function render(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  const country=document.getElementById('fCountry').value;
+  let list=PLAYERS.filter(p=>{
+    if(country && p.country!==country)return false;
+    if(q && !p.player.toLowerCase().includes(q))return false;
+    return true;
+  });
+  list.sort((a,b)=>{let va=sortVal(a,sortKey),vb=sortVal(b,sortKey),c;
+    if(typeof va==='string')c=va.localeCompare(vb);else c=va-vb;
+    if(sortDir==='desc')c=-c; if(c===0)c=b.total_pts-a.total_pts; return c;});
+
+  document.getElementById('summary').innerHTML=`<strong>${list.length}</strong> of ${PLAYERS.length} players & coaches`;
+  document.getElementById('empty').style.display=list.length?'none':'block';
+  const head=document.getElementById('head');head.innerHTML='';
+  COLS.forEach(c=>{const th=document.createElement('th');th.className=(c.cls||'')+k(c.key);
+    th.innerHTML=c.label+(c.key===sortKey?` <span class="arr">${sortDir==='desc'?'▼':'▲'}</span>`:'');
+    if(c.sortable)th.onclick=()=>{if(sortKey===c.key)sortDir=sortDir==='desc'?'asc':'desc';else{sortKey=c.key;sortDir=c.def||(c.type==='str'?'asc':'desc');}render();};else th.style.cursor='default';
+    head.appendChild(th);});
+  const body=document.getElementById('body');body.innerHTML='';
+  list.forEach((p,i)=>{
+    const tr=document.createElement('tr');tr.onclick=()=>location.href='player.html?p='+encodeURIComponent(p.slug);
+    const sup=p.top_sup?`<span class="nm"><a href="reporter.html?v=${p.top_sup.slug}" onclick="event.stopPropagation()">${esc(p.top_sup.voter)}</a></span> <span class="dl pos">+${p.top_sup.diff.toFixed(1)}</span>${p.top_sup.outlet?`<span class="ol">${esc(p.top_sup.outlet)}</span>`:''}`:'<span class="dash">—</span>';
+    const snub=p.top_snub?`<span class="nm"><a href="reporter.html?v=${p.top_snub.slug}" onclick="event.stopPropagation()">${esc(p.top_snub.voter)}</a></span> <span class="dl neg">${p.top_snub.diff.toFixed(1)}</span>${p.top_snub.outlet?`<span class="ol">${esc(p.top_snub.outlet)}</span>`:''}`:'<span class="dash">—</span>';
+    tr.innerHTML=`<td class="rank">${i+1}</td>`+
+      `<td class="pl${k('player')}"><span class="pl-name">${esc(p.player)}</span>${flag(p.country)}</td>`+
+      `<td class="${k('total_pts')}">${p.total_pts.toLocaleString()}</td>`+
+      `<td class="pp${k('top_sup')}">${sup}</td>`+
+      `<td class="pp${k('top_snub')}">${snub}</td>`;
+    body.appendChild(tr);
+  });
+  const cards=document.getElementById('cards');cards.innerHTML='';
+  list.forEach((p,i)=>{const div=document.createElement('div');div.className='card';div.onclick=()=>location.href='player.html?p='+encodeURIComponent(p.slug);
+    const sup=p.top_sup?`<a href="reporter.html?v=${p.top_sup.slug}" onclick="event.stopPropagation()">${esc(p.top_sup.voter)}</a> <span class="pos">+${p.top_sup.diff.toFixed(1)}</span>${p.top_sup.outlet?` <span class="ol-inline">${esc(p.top_sup.outlet)}</span>`:''}`:'—';
+    const snub=p.top_snub?`<a href="reporter.html?v=${p.top_snub.slug}" onclick="event.stopPropagation()">${esc(p.top_snub.voter)}</a> <span class="neg">${p.top_snub.diff.toFixed(1)}</span>${p.top_snub.outlet?` <span class="ol-inline">${esc(p.top_snub.outlet)}</span>`:''}`:'—';
+    div.innerHTML=`<div class="card-rank">#${i+1}</div>`+
+      `<div class="card-head"><div class="nm">${esc(p.player)}${flag(p.country)}</div><div class="meta">${p.total_pts.toLocaleString()} vote pts</div></div>`+
+      `<div class="card-pp"><span class="lbl">Boosted by</span> ${sup}</div>`+
+      `<div class="card-pp"><span class="lbl">Snubbed by</span> ${snub}</div>`;
+    cards.appendChild(div);});
+}
+document.getElementById('q').addEventListener('input',render);
+document.getElementById('fCountry').addEventListener('change',render);
+document.getElementById('reset').onclick=()=>{document.getElementById('q').value='';document.getElementById('fCountry').value='';sortKey='total_pts';sortDir='desc';render();};
+
+fetch('./data/players.json').then(r=>r.json()).then(p=>{
+  PLAYERS=p;
+  const NAME={us:'United States',ca:'Canada',es:'Spain',fr:'France',it:'Italy',de:'Germany',rs:'Serbia',
+    si:'Slovenia',gr:'Greece',cm:'Cameroon',lt:'Lithuania',hr:'Croatia',lv:'Latvia',cz:'Czechia',tr:'Turkey',
+    ng:'Nigeria',ch:'Switzerland',at:'Austria',fi:'Finland',jp:'Japan',ss:'South Sudan',bs:'Bahamas',
+    do:'Dominican Republic',jm:'Jamaica',cd:'DR Congo',sn:'Senegal',se:'Sweden',ba:'Bosnia & Herzegovina',
+    ua:'Ukraine',il:'Israel',nz:'New Zealand',pt:'Portugal',ao:'Angola',ru:'Russia',be:'Belgium',nl:'Netherlands',
+    au:'Australia',br:'Brazil',ar:'Argentina',ve:'Venezuela',lb:'Lebanon',za:'South Africa',vi:'US Virgin Islands',
+    pr:'Puerto Rico',ht:'Haiti',gb:'United Kingdom',ge:'Georgia',me:'Montenegro',mk:'North Macedonia',
+    lc:'Saint Lucia',ie:'Ireland',ee:'Estonia',pl:'Poland',cn:'China',mx:'Mexico'};
+  const cs=Array.from(new Set(p.map(x=>x.country).filter(c=>c&&c!=='n/a'))).sort((a,b)=>(NAME[a]||a).localeCompare(NAME[b]||b));
+  const sel=document.getElementById('fCountry');cs.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=NAME[c]||c;sel.appendChild(o);});
+  render();
+}).catch(e=>{document.getElementById('summary').innerHTML='<span style="color:var(--red)">Failed to load. Serve over http.</span>';console.error(e);});
+</script>
+</body>
+</html>

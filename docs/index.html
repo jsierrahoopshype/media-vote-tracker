@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBA Award Voting — Media Vote Tracker | HoopsMatic</title>
+<meta name="description" content="Every NBA award media ballot since 2014. See which players each voter boosted and snubbed, measured against the rest of the panel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface-hover:#f0f0f2;--border:#d1d1d6;
+  --text:#1d1d1f;--text-secondary:#6e6e73;--accent:#3b82f6;--accent-dim:rgba(59,130,246,.15);
+  --green:#1d8a40;--green-dim:rgba(52,199,89,.16);--red:#d12c2c;--red-dim:rgba(239,68,68,.13);
+  --orange:#b26b00;--orange-dim:rgba(245,158,11,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);
+  color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.container{max-width:1400px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+
+/* nav tabs */
+.tabs{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap}
+.tabs a{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:600;padding:.4rem .8rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary);text-decoration:none}
+.tabs a:hover{border-color:var(--accent);color:var(--accent)}
+.tabs a.active{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* header */
+.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.35rem;flex-wrap:wrap}
+.hdr h1{font-size:1.4rem;font-weight:700;letter-spacing:-.03em}
+.hdr .brand{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary);
+  text-transform:uppercase;letter-spacing:.08em}
+.subtitle{color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;max-width:60rem}
+
+/* filter bar */
+.filters{position:sticky;top:0;z-index:100;background:var(--bg);padding:.6rem 0 .9rem;
+  margin-bottom:.5rem;border-bottom:1px solid var(--border)}
+.filter-row{display:grid;grid-template-columns:2fr 1.1fr 1.1fr 1.5fr auto;gap:.6rem;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.filter-group label{font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;
+  letter-spacing:.06em;font-weight:600}
+input[type=text],select{width:100%;padding:.5rem .8rem;font-size:.85rem;font-family:inherit;
+  border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);transition:.15s}
+input[type=text]:hover,select:hover{border-color:var(--accent)}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.season-range{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:.35rem}
+.season-arrow{color:var(--text-secondary);font-size:.7rem;padding-bottom:.6rem}
+.reset-btn{padding:.5rem .8rem;font-size:.72rem;font-family:inherit;font-weight:600;text-transform:uppercase;
+  letter-spacing:.04em;border:1px solid var(--border);border-radius:8px;background:transparent;
+  color:var(--text-secondary);cursor:pointer;transition:.15s;white-space:nowrap}
+.reset-btn:hover{color:var(--text);border-color:var(--text-secondary);background:var(--surface-hover)}
+.summary{font-size:.74rem;color:var(--text-secondary);margin:.1rem 0 .9rem}
+.summary strong{color:var(--text);font-weight:600}
+
+/* table */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table.lb{width:100%;border-collapse:collapse;font-size:.86rem}
+table.lb thead th{background:var(--surface-hover);color:var(--text-secondary);text-transform:uppercase;
+  letter-spacing:.04em;font-size:.66rem;font-weight:600;padding:.7rem .6rem;text-align:center;
+  border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+table.lb thead th:hover{color:var(--accent)}
+table.lb thead th.sorted-by{background:var(--accent-dim);color:var(--accent);font-weight:700}
+table.lb thead th.left{text-align:left}
+table.lb thead th .arr{font-size:.6rem;opacity:.7;margin-left:.15rem}
+table.lb tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+table.lb tbody tr:last-child{border-bottom:none}
+table.lb tbody tr:hover{background:var(--surface-hover)}
+table.lb td{padding:.55rem .6rem;text-align:center;font-family:'JetBrains Mono',monospace;
+  font-weight:500;white-space:nowrap}
+table.lb td.sorted-by{background:rgba(59,130,246,.05)}
+td.rank{color:var(--text-secondary);font-size:.78rem;width:2.4rem}
+td.rep{text-align:left;font-family:'DM Sans',sans-serif;max-width:17rem}
+.rep-name{font-weight:600}
+.rep-outlet{font-size:.72rem;color:var(--text-secondary);font-weight:400}
+.flag{display:inline-block;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  padding:.05rem .35rem;border-radius:4px;background:var(--orange-dim);color:var(--orange);margin-left:.4rem;vertical-align:middle}
+td.cn{font-size:.78rem;color:var(--text-secondary);text-align:center}
+.flag-img{vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
+.cc{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-secondary)}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.pp{text-align:left;font-family:'DM Sans',sans-serif;max-width:13rem}
+.pp .nm{font-weight:500}
+.pp .dl{font-family:'JetBrains Mono',monospace;font-size:.74rem}
+.pp .sub{font-size:.66rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace}
+.dash{color:var(--text-secondary)}
+
+/* mobile cards */
+.cards{display:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;
+  color:var(--text-secondary)}
+.card-head .nm{font-weight:600;font-size:.96rem}
+.card-head .ou{font-size:.74rem;color:var(--text-secondary)}
+.card-stats{display:flex;gap:1.2rem;margin:.55rem 0 .2rem;font-family:'JetBrains Mono',monospace;font-size:.76rem}
+.card-stats .k{color:var(--text-secondary);font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;display:block}
+.card-meta{margin:.45rem 0 .1rem}
+.outlier-pill{font-family:'JetBrains Mono',monospace;font-size:.66rem;font-weight:600;padding:.1rem .45rem;border-radius:5px}
+.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
+.card-pp .lbl{display:inline-block;min-width:4.2rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+
+.empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
+.foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;
+  font-family:'JetBrains Mono',monospace;line-height:1.7}
+
+@media(max-width:860px){
+  .filter-row{grid-template-columns:1fr 1fr;gap:.4rem}
+  .filter-group.search{grid-column:1/-1}
+  .filter-group.reset-group{grid-column:1/-1}
+  .reset-btn{width:100%;padding:.35rem}
+  .table-wrap{display:none}
+  .cards{display:block}
+  /* compact the filter panel + intro on mobile */
+  .subtitle{display:none}
+  .tabs{margin-bottom:.6rem}
+  .tabs a{padding:.3rem .65rem;font-size:.68rem}
+  .hdr{margin-bottom:.5rem}
+  .hdr h1{font-size:1.15rem}
+  .hdr .brand{display:none}
+  .filters{padding:.3rem 0 .5rem}
+  .filter-group label{font-size:.54rem;margin-bottom:.05rem;letter-spacing:.04em}
+  input[type=text],select{padding:.38rem .55rem;font-size:.8rem}
+  .summary{margin:.1rem 0 .6rem;font-size:.7rem}
+  .card{padding:.6rem .75rem}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="tabs">
+    <a href="index.html" class="active">Reporters</a>
+    <a href="players.html">Players</a>
+    <a href="outlets.html">Outlets</a>
+  </div>
+  <div class="hdr">
+    <h1>NBA Award Voting</h1>
+    <span class="brand">HoopsMatic · Media Vote Tracker</span>
+  </div>
+  <p class="subtitle">Every media ballot for the major NBA awards since 2013-14. Each voter is measured against the rest of the panel that voted the same seasons, so you can see who they boosted and who they snubbed relative to the field.</p>
+
+  <div class="filters">
+    <div class="filter-row">
+      <div class="filter-group search">
+        <label>Search reporter or outlet</label>
+        <input type="text" id="q" placeholder="e.g. Aldridge, ESPN, The Athletic…" autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label>Country</label>
+        <select id="fCountry"><option value="">All</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Voted for award</label>
+        <select id="fAward"><option value="">Any award</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Active between</label>
+        <div class="season-range">
+          <select id="fFrom"></select>
+          <span class="season-arrow">→</span>
+          <select id="fTo"></select>
+        </div>
+      </div>
+      <div class="filter-group reset-group">
+        <label>&nbsp;</label>
+        <button class="reset-btn" id="reset">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="table-wrap">
+    <table class="lb">
+      <thead>
+        <tr id="head"></tr>
+      </thead>
+      <tbody id="body"></tbody>
+    </table>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none">No reporters match those filters.</div>
+
+  <div class="foot">
+    Support = a voter's points for a player minus the average the rest of that season's panel gave the same player, summed across every shared ballot.<br>
+    Fan vote excluded. Coaches appear under Coach of the Year. Click any reporter for their full profile.
+  </div>
+</div>
+
+<script>
+let REPORTERS = [];
+let META = {countries:[],awards:[],seasons:[],award_label:{"MVP": "MVP", "DPOY": "DPOY", "MIP": "MIP", "SMOY": "6th Man", "COY": "Coach", "ROY": "ROY", "CPOY": "Clutch", "ALL_NBA": "All-NBA", "ALL_DEF": "All-D", "ALL_ROOKIE": "All-Rookie"}};
+
+const COLS = [
+  {key:'rank', label:'#', cls:'rank', sortable:false},
+  {key:'voter', label:'Reporter', cls:'rep left', sortable:true, type:'str'},
+  {key:'country', label:'Country', cls:'cn', sortable:true, type:'str'},
+  {key:'n_ballots', label:'Ballots', sortable:true, type:'num', def:'desc'},
+  {key:'span', label:'Span', sortable:true, type:'num'},
+  {key:'fave', label:'Most boosted', cls:'pp left', sortable:true, type:'fave'},
+  {key:'detr', label:'Most snubbed', cls:'pp left', sortable:true, type:'detr'},
+  {key:'outlier_rate', label:'Outlier %', sortable:true, type:'num'},
+];
+
+let sortKey='n_ballots', sortDir='desc';
+
+// filter select refs (populated after data loads)
+const fC=document.getElementById('fCountry');
+const fA=document.getElementById('fAward');
+const fFrom=document.getElementById('fFrom'),fTo=document.getElementById('fTo');
+
+function populateFilters(){
+  META.countries.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;fC.appendChild(o)});
+  META.awards.forEach(a=>{const o=document.createElement('option');o.value=a;o.textContent=META.award_label[a]||a;fA.appendChild(o)});
+  META.seasons.forEach(s=>{
+    const o1=document.createElement('option');o1.value=s;o1.textContent=s;fFrom.appendChild(o1);
+    const o2=document.createElement('option');o2.value=s;o2.textContent=s;fTo.appendChild(o2);
+  });
+  fFrom.value=META.seasons[0]; fTo.value=META.seasons[META.seasons.length-1];
+}
+
+function perBallot(d,n){return n? (d/n):0;}
+
+function currentFilters(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  return {
+    q,
+    country:fC.value, award:fA.value,
+    from:fFrom.value, to:fTo.value,
+  };
+}
+function passes(r,f){
+  if(f.q && !( (r.voter||'').toLowerCase().includes(f.q) || (r.outlet||'').toLowerCase().includes(f.q) )) return false;
+  if(f.country && r.country!==f.country) return false;
+  if(f.award && !(r.awards||[]).includes(f.award)) return false;
+  // active-between overlap of [first_season,last_season] with [from,to]
+  if(r.last_season < f.from || r.first_season > f.to) return false;
+  return true;
+}
+function sortVal(r,key){
+  if(key==='span') return r.n_seasons;
+  if(key==='fave') return r.fave? r.fave.diff : -1e9;
+  if(key==='detr') return r.detr? r.detr.diff : 1e9;
+  if(key==='voter') return (r.voter||'').toLowerCase();
+  if(key==='country') return (r.country||'').toLowerCase();
+  return r[key]!=null? r[key] : -1e9;
+}
+function render(){
+  const f=currentFilters();
+  let list=REPORTERS.filter(r=>passes(r,f));
+  const col=COLS.find(c=>c.key===sortKey);
+  list.sort((a,b)=>{
+    let va=sortVal(a,sortKey), vb=sortVal(b,sortKey), c;
+    if(typeof va==='string') c=va.localeCompare(vb); else c=va-vb;
+    if(sortDir==='desc') c=-c;
+    if(c===0) c=b.n_ballots-a.n_ballots;
+    return c;
+  });
+
+  // summary
+  document.getElementById('summary').innerHTML =
+    `<strong>${list.length}</strong> of ${REPORTERS.length} media voters`;
+
+  // head
+  const head=document.getElementById('head'); head.innerHTML='';
+  COLS.forEach(c=>{
+    const th=document.createElement('th');
+    th.className=(c.cls||'')+(c.key===sortKey?' sorted-by':'');
+    if(c.label.length) th.classList.toggle('left', (c.cls||'').includes('left'));
+    th.innerHTML=c.label+(c.key===sortKey?` <span class="arr">${sortDir==='desc'?'▼':'▲'}</span>`:'');
+    if(c.sortable) th.onclick=()=>{ if(sortKey===c.key){sortDir=sortDir==='desc'?'asc':'desc';} else {sortKey=c.key; sortDir=c.def||(c.type==='str'?'asc':'desc');} render(); };
+    else th.style.cursor='default';
+    head.appendChild(th);
+  });
+
+  // body
+  const body=document.getElementById('body'); body.innerHTML='';
+  const empty=document.getElementById('empty');
+  empty.style.display = list.length? 'none':'block';
+  list.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.onclick=()=>{ window.location.href='reporter.html?v='+encodeURIComponent(r.slug); };
+    const fave = r.fave? `<span class="nm"><a href="player.html?p=${r.fave.slug}" onclick="event.stopPropagation()">${esc(r.fave.player)}</a></span> <span class="dl pos">+${r.fave.diff.toFixed(1)}</span><br><span class="sub">+${perBallot(r.fave.diff,r.fave.n).toFixed(1)}/ballot · ${r.fave.n}b</span>` : '<span class="dash">—</span>';
+    const detr = r.detr? `<span class="nm"><a href="player.html?p=${r.detr.slug}" onclick="event.stopPropagation()">${esc(r.detr.player)}</a></span> <span class="dl neg">${r.detr.diff.toFixed(1)}</span><br><span class="sub">${perBallot(r.detr.diff,r.detr.n).toFixed(1)}/ballot · ${r.detr.n}b</span>` : '<span class="dash">—</span>';
+    const flag = r.low_sample? '<span class="flag">&lt;3 yr</span>':'';
+    const outletLink = r.outlet? `<a href="outlet.html?o=${r.outlet_slug}" onclick="event.stopPropagation()">${esc(r.outlet)}</a>` : '';
+    tr.innerHTML =
+      `<td class="rank">${i+1}</td>`+
+      `<td class="rep${k('voter')}"><div class="rep-name">${esc(r.voter)}${flag}</div><div class="rep-outlet">${outletLink}</div></td>`+
+      `<td class="cn${k('country')}" title="${esc(r.country||'')}">${flagEmoji(r.country)}</td>`+
+      `<td class="${k('n_ballots')}">${r.n_ballots}</td>`+
+      `<td class="${k('span')}">${r.first_season.slice(0,4)}–${r.last_season.slice(-2)}<br><span class="sub">${r.n_seasons} yr</span></td>`+
+      `<td class="pp${k('fave')}">${fave}</td>`+
+      `<td class="pp${k('detr')}">${detr}</td>`+
+      `<td class="${k('outlier_rate')}" style="${outlierStyle(r.outlier_rate)}">${Math.round(r.outlier_rate*100)}%</td>`;
+    body.appendChild(tr);
+  });
+
+  // cards (mobile)
+  const cards=document.getElementById('cards'); cards.innerHTML='';
+  list.forEach((r,i)=>{
+    const div=document.createElement('div'); div.className='card';
+    div.onclick=()=>{ window.location.href='reporter.html?v='+encodeURIComponent(r.slug); };
+    const fave = r.fave? `<span class="nm"><a href="player.html?p=${r.fave.slug}" onclick="event.stopPropagation()">${esc(r.fave.player)}</a></span> <span class="pos">+${r.fave.diff.toFixed(1)}</span> <span class="sub">(${r.fave.n}b)</span>`:'—';
+    const detr = r.detr? `<span class="nm"><a href="player.html?p=${r.detr.slug}" onclick="event.stopPropagation()">${esc(r.detr.player)}</a></span> <span class="neg">${r.detr.diff.toFixed(1)}</span> <span class="sub">(${r.detr.n}b)</span>`:'—';
+    const flag = r.low_sample? '<span class="flag">&lt;3 yr</span>':'';
+    const outletLink = r.outlet? `<a href="outlet.html?o=${r.outlet_slug}" onclick="event.stopPropagation()">${esc(r.outlet)}</a>` : '';
+    div.innerHTML =
+      `<div class="card-rank">#${i+1}</div>`+
+      `<div class="card-head"><div class="nm">${esc(r.voter)}${flag}</div><div class="ou">${outletLink}${r.country?' '+flagEmoji(r.country):''}</div></div>`+
+      `<div class="card-meta"><span class="outlier-pill" style="${outlierStyle(r.outlier_rate)}">${Math.round(r.outlier_rate*100)}% outlier</span></div>`+
+      `<div class="card-pp"><span class="lbl">Boosted</span> ${fave}</div>`+
+      `<div class="card-pp"><span class="lbl">Snubbed</span> ${detr}</div>`;
+    cards.appendChild(div);
+  });
+}
+function k(key){return key===sortKey?' sorted-by':'';}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+// country -> ISO2 for real flag images (Windows can't render flag emoji)
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',
+  China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+function flagEmoji(c){
+  const code=ISO[c];
+  if(!code) return (c&&c!=='n/a')? `<span class="cc">${esc(c)}</span>` : '';
+  return `<img class="flag-img" src="https://flagcdn.com/h20/${code}.png" srcset="https://flagcdn.com/h40/${code}.png 2x" height="14" alt="${esc(c)}" title="${esc(c)}" loading="lazy">`;
+}
+
+// outlier heat: 0% = strong green (consensus), >=10% = strong red (big outlier)
+function outlierStyle(rate){
+  const t=Math.max(0,Math.min(1, rate/0.10));
+  const hue=120*(1-t);                       // 120 green -> 0 red
+  return `background-color:hsl(${hue},70%,70%);color:hsl(${hue},85%,17%);font-weight:600`;
+}
+
+['q','fCountry','fAward','fFrom','fTo'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener(id==='q'?'input':'change', render);
+});
+document.getElementById('reset').onclick=()=>{
+  document.getElementById('q').value='';
+  fC.value=''; fA.value=''; fFrom.value=META.seasons[0]; fTo.value=META.seasons[META.seasons.length-1];
+  sortKey='n_ballots'; sortDir='desc'; render();
+};
+
+// ---- bootstrap: load data, derive filter options, render ----
+Promise.all([
+  fetch('./data/reporters.json').then(r=>r.json()),
+  fetch('./data/meta.json').then(r=>r.json()),
+]).then(([reps, meta])=>{
+  REPORTERS = reps;
+  META.awards = meta.awards;
+  META.seasons = meta.seasons;
+  META.countries = Array.from(new Set(reps.map(r=>r.country).filter(c=>c && c!=='n/a'))).sort();
+  populateFilters();
+  render();
+}).catch(err=>{
+  document.getElementById('summary').innerHTML='<span style="color:var(--red)">Failed to load data. If viewing locally, serve over http (not file://).</span>';
+  console.error(err);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outlets — Media Vote Tracker | HoopsMatic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f7;--surface:#fff;--surface-hover:#f0f0f2;--border:#d1d1d6;
+  --text:#1d1d1f;--text-secondary:#6e6e73;--accent:#3b82f6;--accent-dim:rgba(59,130,246,.15);
+  --green:#1d8a40;--red:#d12c2c;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
+.container{max-width:1300px;margin:0 auto;padding:1.5rem 1.5rem 4rem}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.tabs{display:flex;gap:.3rem;margin-bottom:1rem;flex-wrap:wrap}
+.tabs a{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:600;padding:.4rem .8rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-secondary)}
+.tabs a:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.tabs a.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.hdr{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:.35rem;flex-wrap:wrap}
+.hdr h1{font-size:1.4rem;font-weight:700;letter-spacing:-.03em}
+.hdr .brand{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em}
+.subtitle{color:var(--text-secondary);font-size:.9rem;margin-bottom:1.25rem;max-width:62rem}
+.filters{position:sticky;top:0;z-index:100;background:var(--bg);padding:.6rem 0 .9rem;margin-bottom:.5rem;border-bottom:1px solid var(--border)}
+.filter-row{display:grid;grid-template-columns:2fr 1fr auto;gap:.6rem;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.filter-group label{font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+input[type=text],select{width:100%;padding:.5rem .8rem;font-size:.85rem;font-family:inherit;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.reset-btn{padding:.5rem .8rem;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-secondary);cursor:pointer;white-space:nowrap}
+.reset-btn:hover{color:var(--text);border-color:var(--text-secondary)}
+.summary{font-size:.74rem;color:var(--text-secondary);margin:.1rem 0 .9rem}
+.summary strong{color:var(--text)}
+.note{font-size:.72rem;color:var(--text-secondary);margin-bottom:.9rem;font-style:italic}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+thead th{background:var(--surface-hover);color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;font-size:.66rem;font-weight:600;padding:.7rem .6rem;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--accent)}
+thead th.sorted-by{background:var(--accent-dim);color:var(--accent);font-weight:700}
+thead th.left{text-align:left}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s;cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-hover)}
+td{padding:.55rem .6rem;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:500;white-space:nowrap}
+td.rank{color:var(--text-secondary);font-size:.78rem;width:2.4rem}
+td.ol{text-align:left;font-family:'DM Sans',sans-serif;font-weight:600}
+.flag-img{height:13px;vertical-align:middle;border-radius:2px;box-shadow:0 0 0 .5px rgba(0,0,0,.18);margin-left:.4rem}
+td.over,td.under{text-align:left;font-family:'DM Sans',sans-serif;font-size:.8rem}
+.over .dl{font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:600}
+.under .dl{font-family:'JetBrains Mono',monospace;color:var(--red);font-weight:600}
+.over .ctx,.under .ctx{font-size:.64rem;color:var(--text-secondary)}
+.lean-pill{display:inline-block;padding:.1rem .5rem;border-radius:20px;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.76rem}
+.dash{color:var(--text-secondary)}
+.cards{display:none}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;position:relative}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary)}
+.card .nm{font-weight:600;font-size:.96rem}.card .meta{font-size:.72rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace}
+.card-row{margin-top:.45rem;font-size:.8rem}
+.card-row .lbl{font-size:.6rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
+@media(max-width:820px){.filter-row{grid-template-columns:1fr}.table-wrap{display:none}.cards{display:block}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="tabs">
+    <a href="index.html">Reporters</a>
+    <a href="players.html">Players</a>
+    <a href="outlets.html" class="active">Outlets</a>
+    
+  </div>
+  <div class="hdr"><h1>Outlets</h1><span class="brand">HoopsMatic · Media Vote Tracker</span></div>
+  <p class="subtitle">Every outlet whose writers cast NBA award ballots since 2013-14. "Lean" measures how far the outlet's votes drifted from the panel on average. Sort by lean to find the most consensus-bound, or the most contrarian.</p>
+
+  <div class="filters"><div class="filter-row">
+    <div class="filter-group"><label>Search outlet</label><input type="text" id="q" placeholder="e.g. ESPN, Athletic, Denver…" autocomplete="off"></div>
+    <div class="filter-group"><label>Country</label><select id="fCountry"><option value="">All</option></select></div>
+    <div class="filter-group"><label>&nbsp;</label><button class="reset-btn" id="reset">Reset</button></div>
+  </div></div>
+
+  <div class="summary" id="summary"></div>
+  <div class="note">Lean = average absolute gap between the outlet's vote and the panel's, across all its picks. Bigger = the outlet's writers more often diverged from consensus (small national outlets regress toward the panel; local beats lean harder).</div>
+  <div class="table-wrap"><table><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div>
+  <div class="cards" id="cards"></div>
+  <div class="foot">Click any outlet for its full collective voting record vs the panel.</div>
+</div>
+<script>
+let OUTLETS=[];
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+function flagImg(c){const code=ISO[c];return code?`<img class="flag-img" src="https://flagcdn.com/h40/${code}.png" alt="${esc(c)}" title="${esc(c)}">`:'';}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function k(key){return key===sortKey?' sorted-by':'';}
+const AW={MVP:'MVP',DPOY:'DPOY',MIP:'MIP',SMOY:'6th',COY:'COY',ROY:'ROY',CPOY:'Clutch',ALL_NBA:'All-NBA',ALL_DEF:'All-D',ALL_ROOKIE:'All-Rk'};
+
+const COLS=[
+  {key:'rank',label:'#',cls:'rank',sortable:false},
+  {key:'outlet',label:'Outlet',cls:'ol left',sortable:true,type:'str'},
+  {key:'n_reporters',label:'Writers',sortable:true,type:'num'},
+  {key:'n_ballots',label:'Ballots',sortable:true,type:'num',def:'desc'},
+  {key:'avg_lean',label:'Lean',sortable:true,type:'num'},
+  {key:'biggest_over',label:'Most boosted',cls:'over left',sortable:true,type:'over'},
+  {key:'biggest_under',label:'Most snubbed',cls:'under left',sortable:true,type:'under'},
+];
+let sortKey='n_ballots',sortDir='desc';
+
+function leanStyle(lean){
+  const t=Math.max(0,Math.min(1,lean/0.9));
+  const h=120*(1-t);  // low lean = green (consensus), high = red-ish (contrarian)
+  return `background-color:hsl(${h},65%,85%);color:hsl(${h},70%,24%)`;
+}
+function sortVal(r,key){
+  if(key==='outlet')return r.outlet.toLowerCase();
+  if(key==='biggest_over')return r.biggest_over?r.biggest_over.diff:-1e9;
+  if(key==='biggest_under')return r.biggest_under?r.biggest_under.diff:1e9;
+  return r[key]!=null?r[key]:-1e9;
+}
+function render(){
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  const country=document.getElementById('fCountry').value;
+  let list=OUTLETS.filter(o=>{
+    if(country && o.country!==country)return false;
+    if(q && !o.outlet.toLowerCase().includes(q))return false;
+    return true;
+  });
+  list.sort((a,b)=>{let va=sortVal(a,sortKey),vb=sortVal(b,sortKey),c;
+    if(typeof va==='string')c=va.localeCompare(vb);else c=va-vb;
+    if(sortDir==='desc')c=-c; if(c===0)c=b.n_ballots-a.n_ballots; return c;});
+
+  document.getElementById('summary').innerHTML=`<strong>${list.length}</strong> of ${OUTLETS.length} outlets`;
+  const head=document.getElementById('head');head.innerHTML='';
+  COLS.forEach(c=>{const th=document.createElement('th');th.className=(c.cls||'')+k(c.key);
+    th.innerHTML=c.label+(c.key===sortKey?` <span style="font-size:.6rem">${sortDir==='desc'?'▼':'▲'}</span>`:'');
+    if(c.sortable)th.onclick=()=>{if(sortKey===c.key)sortDir=sortDir==='desc'?'asc':'desc';else{sortKey=c.key;sortDir=c.def||(c.type==='str'?'asc':'desc');}render();};else th.style.cursor='default';
+    head.appendChild(th);});
+  const body=document.getElementById('body');body.innerHTML='';
+  list.forEach((o,i)=>{
+    const tr=document.createElement('tr');tr.onclick=()=>location.href='outlet.html?o='+encodeURIComponent(o.slug);
+    const over=o.biggest_over?`<span class="nm"><a href="player.html?p=${o.biggest_over.slug}" onclick="event.stopPropagation()">${esc(o.biggest_over.player)}</a></span> <span class="dl">+${o.biggest_over.diff.toFixed(1)}</span><br><span class="ctx">${AW[o.biggest_over.award]||o.biggest_over.award} ${o.biggest_over.season}</span>`:'<span class="dash">—</span>';
+    const under=o.biggest_under?`<span class="nm"><a href="player.html?p=${o.biggest_under.slug}" onclick="event.stopPropagation()">${esc(o.biggest_under.player)}</a></span> <span class="dl">${o.biggest_under.diff.toFixed(1)}</span><br><span class="ctx">${AW[o.biggest_under.award]||o.biggest_under.award} ${o.biggest_under.season}</span>`:'<span class="dash">—</span>';
+    tr.innerHTML=`<td class="rank">${i+1}</td>`+
+      `<td class="ol${k('outlet')}">${esc(o.outlet)}${flagImg(o.country)}</td>`+
+      `<td class="${k('n_reporters')}">${o.n_reporters}</td>`+
+      `<td class="${k('n_ballots')}">${o.n_ballots}</td>`+
+      `<td class="${k('avg_lean')}"><span class="lean-pill" style="${leanStyle(o.avg_lean)}">${o.avg_lean.toFixed(2)}</span></td>`+
+      `<td class="over${k('biggest_over')}">${over}</td>`+
+      `<td class="under${k('biggest_under')}">${under}</td>`;
+    body.appendChild(tr);
+  });
+  const cards=document.getElementById('cards');cards.innerHTML='';
+  list.forEach((o,i)=>{const div=document.createElement('div');div.className='card';div.onclick=()=>location.href='outlet.html?o='+encodeURIComponent(o.slug);
+    const over=o.biggest_over?`${esc(o.biggest_over.player)} <span style="color:var(--green)">+${o.biggest_over.diff.toFixed(1)}</span>`:'—';
+    const under=o.biggest_under?`${esc(o.biggest_under.player)} <span style="color:var(--red)">${o.biggest_under.diff.toFixed(1)}</span>`:'—';
+    div.innerHTML=`<div class="card-rank">#${i+1}</div><div class="nm">${esc(o.outlet)} ${flagImg(o.country)}</div>`+
+      `<div class="meta">${o.n_reporters} writers · ${o.n_ballots} ballots · lean ${o.avg_lean.toFixed(2)}</div>`+
+      `<div class="card-row"><span class="lbl">Most boosted</span> ${over}</div><div class="card-row"><span class="lbl">Most snubbed</span> ${under}</div>`;
+    cards.appendChild(div);});
+}
+document.getElementById('q').addEventListener('input',render);
+document.getElementById('fCountry').addEventListener('change',render);
+document.getElementById('reset').onclick=()=>{document.getElementById('q').value='';document.getElementById('fCountry').value='';sortKey='n_ballots';sortDir='desc';render();};
+
+fetch('./data/outlets.json').then(r=>r.json()).then(o=>{
+  OUTLETS=o;
+  const cs=Array.from(new Set(o.map(x=>x.country).filter(c=>c&&c!=='n/a'))).sort();
+  const sel=document.getElementById('fCountry');cs.forEach(c=>{const op=document.createElement('option');op.value=c;op.textContent=c;sel.appendChild(op);});
+  render();
+}).catch(e=>{document.getElementById('summary').innerHTML='<span style="color:var(--red)">Failed to load. Serve over http.</span>';console.error(e);});
+</script>
+</body>
+</html>
