@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Player Profile — Media Vote Tracker | HoopsMatic</title>
+<title>NBA award voting record | Media Vote Tracker · HoopsMatic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -108,12 +108,19 @@ let DATA=null, curAward='ALL', expanded=false;
 
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function outletSlug(o){return o.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();}
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb','United Kingdom':'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar',Serbia:'rs',Slovenia:'si',Greece:'gr',Cameroon:'cm',Lithuania:'lt',Croatia:'hr',Latvia:'lv','Czech Republic':'cz',Turkey:'tr',Nigeria:'ng',Switzerland:'ch',Austria:'at',Finland:'fi',Japan:'jp','South Sudan':'ss',Bahamas:'bs','Dominican Republic':'do',Jamaica:'jm','Democratic Republic of the Congo':'cd',Senegal:'sn',Mali:'ml',Sweden:'se',Montenegro:'me','Bosnia and Herzegovina':'ba',Ukraine:'ua',Israel:'il',Egypt:'eg',Georgia:'ge','New Zealand':'nz',Portugal:'pt',Angola:'ao',Tunisia:'tn',Guinea:'gn',Poland:'pl',Russia:'ru',Belgium:'be',Netherlands:'nl',Ireland:'ie','US Virgin Islands':'vi','Puerto Rico':'pr',Lebanon:'lb','South Africa':'za',Venezuela:'ve','Saint Lucia':'lc',Estonia:'ee','North Macedonia':'mk'};
+function flag(c){
+  if(!c||c==='n/a')return '';
+  const code=(c.length===2)?c.toLowerCase():ISO[c];
+  if(!code)return '';
+  return ` <img class="flag-img" src="https://flagcdn.com/h20/${code}.png" srcset="https://flagcdn.com/h40/${code}.png 2x" height="11" alt="${esc(c)}" title="${esc(c)}" loading="lazy">`;
+}
 
 function load(){
   const slug=new URLSearchParams(location.search).get('p');
   if(!slug){ document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">No player specified. <a href="index.html">Back to directory.</a></p>'; return; }
   fetch(`./data/player/${slug}.json`).then(r=>{if(!r.ok)throw 0;return r.json();})
-    .then(d=>{DATA=d;render();})
+    .then(d=>{DATA=d;document.title=`${d.player} — NBA award voting record | Media Vote Tracker · HoopsMatic`;render();})
     .catch(()=>{document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">Player not found. <a href="index.html">Back to directory.</a></p>';});
 }
 
@@ -216,11 +223,11 @@ function renderBoard(){
   // build board for selected award using per-voter by_award diffs
   let board;
   if(curAward==='ALL'){
-    board=DATA.board.map(b=>({voter:b.voter,slug:b.slug,diff:b.diff,n:b.n,outlet:b.outlet}));
+    board=DATA.board.map(b=>({voter:b.voter,slug:b.slug,diff:b.diff,n:b.n,outlet:b.outlet,country:b.country}));
   } else {
     board=DATA.board
       .filter(b=>b.by_award && b.by_award[curAward])
-      .map(b=>({voter:b.voter,slug:b.slug,diff:b.by_award[curAward].diff,n:b.by_award[curAward].n,outlet:b.outlet}))
+      .map(b=>({voter:b.voter,slug:b.slug,diff:b.by_award[curAward].diff,n:b.by_award[curAward].n,outlet:b.outlet,country:b.country}))
       .sort((a,b)=>b.diff-a.diff);
   }
   const N=15;
@@ -237,7 +244,7 @@ function renderBoard(){
     const perB=b.n?(b.diff/b.n):0;
     const outlet=b.outlet?`<span class="ol"><a href="outlet.html?o=${encodeURIComponent(outletSlug(b.outlet))}">${esc(b.outlet)}</a></span>`:'';
     return `<div class="row">
-      <div class="pl"><a href="reporter.html?v=${b.slug}">${esc(b.voter)}</a>${outlet}</div>
+      <div class="pl"><a href="reporter.html?v=${b.slug}">${esc(b.voter)}</a>${flag(b.country)}${outlet}</div>
       <div class="barwrap">${bar}</div>
       <div class="val ${cls}">${sign}${b.diff.toFixed(1)}<span class="sub">${sign}${perB.toFixed(1)}/b · ${b.n}b</span></div>
     </div>`;

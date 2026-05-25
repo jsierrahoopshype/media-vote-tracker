@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reporter Profile — Media Vote Tracker | HoopsMatic</title>
+<title>NBA award ballots & voting history | Media Vote Tracker · HoopsMatic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -140,9 +140,14 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 
 <script>
 const AWARD_LABEL = {"MVP": "MVP", "DPOY": "DPOY", "MIP": "MIP", "SMOY": "6th Man", "COY": "Coach", "ROY": "ROY", "CPOY": "Clutch", "ALL_NBA": "All-NBA", "ALL_DEF": "All-Def", "ALL_ROOKIE": "All-Rookie"};
-const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb','United Kingdom':'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar',Serbia:'rs',Slovenia:'si',Greece:'gr',Cameroon:'cm',Lithuania:'lt',Croatia:'hr',Latvia:'lv',Turkey:'tr',Nigeria:'ng',Switzerland:'ch',Austria:'at',Finland:'fi',Japan:'jp',Portugal:'pt',Israel:'il',Russia:'ru',Ukraine:'ua',Sweden:'se',Belgium:'be',Netherlands:'nl',Ireland:'ie',Poland:'pl'};
 function flagImg(c,cls){const code=ISO[c];if(!code) return c&&c!=='n/a'?`<span class="cc">${esc(c)}</span>`:'';
   return `<img class="flag-img ${cls}" src="https://flagcdn.com/h40/${code}.png" alt="${esc(c)}" title="${esc(c)}">`;}
+function flagCode(c){
+  if(!c||c==='n/a')return '';
+  const code=(c.length===2)?c.toLowerCase():ISO[c];
+  if(!code)return '';
+  return ` <img class="flag-img" src="https://flagcdn.com/h20/${code}.png" srcset="https://flagcdn.com/h40/${code}.png 2x" height="11" alt="${esc(c)}" title="${esc(c)}" loading="lazy">`;}
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function heatStyle(rate){const t=Math.max(0,Math.min(1,rate/0.10));const h=120*(1-t);
   return `background-color:hsl(${h},70%,70%);color:hsl(${h},85%,17%)`;}
@@ -173,17 +178,17 @@ function load(){
   if(!slug){ document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">No reporter specified. <a href="index.html">Back to directory.</a></p>'; return; }
   fetch(`./data/reporter/${slug}.json`).then(r=>{
     if(!r.ok) throw new Error('not found'); return r.json();
-  }).then(d=>{DATA=d; render();}).catch(()=>{
+  }).then(d=>{DATA=d;document.title=`${d.voter} — NBA award ballots & voting history | Media Vote Tracker · HoopsMatic`;render();}).catch(()=>{
     document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">Reporter not found. <a href="index.html">Back to directory.</a></p>';
   });
 }
 
 function boardForAward(){
   // recompute the board for the selected award using per-award diffs
-  if(curAward==='ALL') return DATA.board.map(b=>({player:b.player,team:b.team,diff:b.diff,n:b.n}));
+  if(curAward==='ALL') return DATA.board.map(b=>({player:b.player,slug:b.slug,country:b.country,team:b.team,diff:b.diff,n:b.n}));
   return DATA.board
     .filter(b=>b.by_award && b.by_award[curAward])
-    .map(b=>({player:b.player,team:b.team,diff:b.by_award[curAward].diff,n:b.by_award[curAward].n}))
+    .map(b=>({player:b.player,slug:b.slug,country:b.country,team:b.team,diff:b.by_award[curAward].diff,n:b.by_award[curAward].n}))
     .sort((a,b)=>b.diff-a.diff);
 }
 
@@ -300,7 +305,7 @@ function renderBallots(){
     if(ex && (ex.champs.length||ex.snubs.length)){
       html+=`<div class="award-extremes">`;
       if(ex.champs.length){
-        html+=`<div class="ex-line"><span class="ex-lbl ex-up">Most championed</span>`+
+        html+=`<div class="ex-line"><span class="ex-lbl ex-up">Most boosted</span>`+
           ex.champs.map(c=>`<span class="ex-chip up">${esc(c.player)} <b>+${c.diff.toFixed(1)}</b></span>`).join('')+`</div>`;
       }
       if(ex.snubs.length){
@@ -319,7 +324,7 @@ function miniList(arr){
   const maxSim=Math.max(...arr.map(x=>x.sim));
   return arr.map(t=>{
     const w=Math.round((t.sim/ (maxSim||1))*46)+4;
-    return `<div class="mini"><span class="nm"><a href="reporter.html?v=${t.slug}">${esc(t.voter)}</a></span>`+
+    return `<div class="mini"><span class="nm"><a href="reporter.html?v=${t.slug}">${esc(t.voter)}</a>${flagCode(t.country)}</span>`+
       `<span class="sim"><span class="simbar" style="width:${w}px"></span>${t.sim.toFixed(2)} · ${t.n}</span></div>`;
   }).join('');
 }
@@ -344,7 +349,7 @@ function renderBoard(){
     const sign=b.diff>=0?'+':'';
     const perB=b.n?(b.diff/b.n):0;
     return `<div class="row">
-      <div class="pl"><a href="player.html?p=${slugify(b.player)}">${esc(b.player)}</a></div>
+      <div class="pl"><a href="player.html?p=${b.slug||slugify(b.player)}">${esc(b.player)}</a>${flagCode(b.country)}</div>
       <div class="barwrap">${bar}</div>
       <div class="val ${cls}">${sign}${b.diff.toFixed(1)}<span class="sub">${sign}${perB.toFixed(1)}/b · ${b.n}b</span></div>
     </div>`;

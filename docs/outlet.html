@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Outlet Profile — Media Vote Tracker | HoopsMatic</title>
+<title>NBA award voting record | Media Vote Tracker · HoopsMatic</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -54,6 +54,33 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .pk .df{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700;text-align:right;min-width:3rem}
 .pk .df.pos{color:var(--green)}.pk .df.neg{color:var(--red)}
 .only-diff-note{font-size:.7rem;color:var(--text-secondary);margin-bottom:.5rem;font-style:italic}
+.board{display:flex;flex-direction:column;gap:.18rem}
+.brow{display:grid;grid-template-columns:13rem 1fr 4.5rem;align-items:center;gap:.6rem;padding:.12rem 0;font-size:.84rem}
+.brow .pl{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow .pl a{font-weight:500;color:var(--text);text-decoration:none}
+.brow .pl a:hover{color:var(--accent)}
+.brow .barwrap{position:relative;height:1.4rem;background:linear-gradient(90deg,transparent 49.7%,var(--border) 49.7%,var(--border) 50.3%,transparent 50.3%)}
+.brow .bar{position:absolute;top:.25rem;height:.9rem;border-radius:3px}
+.brow .bar.pos{left:50%;background:var(--green-bar)}
+.brow .bar.neg{right:50%;background:var(--red-bar)}
+.brow .val{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:600;text-align:left}
+.brow .val.pos{color:var(--green)}.brow .val.neg{color:var(--red)}
+.showmore{margin-top:.8rem;font-size:.74rem;font-family:'JetBrains Mono',monospace;background:none;border:none;color:var(--accent);cursor:pointer}
+.showmore:hover{text-decoration:underline}
+@media(max-width:560px){.brow{grid-template-columns:9rem 1fr 4rem}}
+.award-extremes{margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:.4rem}
+.ex-line{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.ex-lbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;min-width:5.5rem}
+.ex-lbl.ex-up{color:var(--green)}
+.ex-lbl.ex-dn{color:var(--red)}
+.ex-chip{font-size:.78rem;padding:.18rem .5rem;border-radius:20px;font-weight:500}
+.ex-chip.up{background:rgba(29,138,64,.12)}
+.ex-chip.dn{background:rgba(209,44,44,.10)}
+.ex-chip a{text-decoration:none}
+.ex-chip.up a{color:var(--green)}
+.ex-chip.dn a{color:var(--red)}
+.ex-chip a:hover{text-decoration:underline}
+.ex-chip b{font-family:'JetBrains Mono',monospace;font-weight:700}
 .foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
 @media(max-width:560px){.pk{grid-template-columns:1fr auto;row-gap:.1rem}.pk .avgs{grid-column:1;font-size:.64rem}}
 </style>
@@ -71,6 +98,11 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 const AWARD_FULL={"MVP": "Most Valuable Player", "DPOY": "Defensive Player of the Year", "MIP": "Most Improved Player", "SMOY": "Sixth Man of the Year", "COY": "Coach of the Year", "ROY": "Rookie of the Year", "CPOY": "Clutch Player of the Year", "ALL_NBA": "All-NBA", "ALL_DEF": "All-Defensive", "ALL_ROOKIE": "All-Rookie"};
 const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
 function flagImg(c){const code=ISO[c];return code?`<img class="flag-img" src="https://flagcdn.com/h40/${code}.png" alt="${esc(c)}" title="${esc(c)}">`:'';}
+function flagCode(c){
+  if(!c||c==='n/a')return '';
+  const code=(c.length===2)?c.toLowerCase():ISO[c];
+  if(!code)return '';
+  return ` <img class="flag-img" src="https://flagcdn.com/h20/${code}.png" srcset="https://flagcdn.com/h40/${code}.png 2x" height="11" alt="${esc(c)}" title="${esc(c)}" loading="lazy">`;}
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 let DATA=null, onlyDiff=true;
 
@@ -78,7 +110,7 @@ function load(){
   const slug=new URLSearchParams(location.search).get('o');
   if(!slug){document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">No outlet specified. <a href="index.html">Back.</a></p>';return;}
   fetch(`./data/outlet/${slug}.json`).then(r=>{if(!r.ok)throw 0;return r.json();})
-    .then(d=>{DATA=d;render();})
+    .then(d=>{DATA=d;document.title=`${d.outlet} — NBA award voting record | Media Vote Tracker · HoopsMatic`;render();})
     .catch(()=>{document.getElementById('app').innerHTML='<p style="color:var(--text-secondary)">Outlet not found. <a href="index.html">Back.</a></p>';});
 }
 
@@ -103,6 +135,14 @@ function render(){
   }).join('');
   html+=`</div></div>`;
 
+  // combined diverging board (players this outlet rated most above/below the panel, all awards)
+  html+=`<div class="section">
+    <h2>Most boosted & most snubbed</h2>
+    <div class="hint">Players this outlet's voters collectively rated furthest above (green) or below (red) the rest of the panel, summed across every award and season.</div>
+    <div class="board" id="board"></div>
+    <button class="showmore" id="showmore"></button>
+  </div>`;
+
   // aggregate record
   const awards=d.awards.map(a=>a.award);
   html+=`<div class="section">
@@ -121,7 +161,38 @@ function render(){
     document.querySelectorAll('#dtoggle button').forEach(x=>x.classList.toggle('active',x.dataset.d===b.dataset.d));
     renderRecord();
   });
+  renderBoard();
   renderRecord();
+}
+
+let boardExpanded=false;
+function renderBoard(){
+  // aggregate each player's diff across ALL awards/seasons for this outlet
+  const agg={};
+  DATA.awards.forEach(ab=>ab.seasons.forEach(blk=>blk.picks.forEach(p=>{
+    if(!agg[p.player]) agg[p.player]={player:p.player,slug:p.slug,country:p.country,diff:0};
+    agg[p.player].diff+=p.diff;
+  })));
+  let board=Object.values(agg).filter(p=>Math.abs(p.diff)>=0.3).sort((a,b)=>b.diff-a.diff);
+  const N=15;
+  const pos=board.filter(b=>b.diff>0);
+  const neg=board.filter(b=>b.diff<0);
+  let show = boardExpanded? board : pos.slice(0,N).concat(neg.slice(-N));
+  const maxAbs=Math.max(1,...board.map(b=>Math.abs(b.diff)));
+  const el=document.getElementById('board');
+  if(!board.length){el.innerHTML='<div class="hint">No notable differences from the panel.</div>';return;}
+  el.innerHTML=show.map(b=>{
+    const pct=Math.abs(b.diff)/maxAbs*100;
+    const bar=b.diff>=0?`<div class="bar pos" style="width:${pct/2}%"></div>`:`<div class="bar neg" style="width:${pct/2}%"></div>`;
+    const cls=b.diff>=0?'pos':'neg';
+    const sign=b.diff>=0?'+':'';
+    return `<div class="brow"><div class="pl"><a href="player.html?p=${b.slug}">${esc(b.player)}</a>${flagCode(b.country)}</div>`+
+      `<div class="barwrap">${bar}</div>`+
+      `<div class="val ${cls}">${sign}${b.diff.toFixed(1)}</div></div>`;
+  }).join('');
+  const sm=document.getElementById('showmore');
+  if(board.length>2*N){sm.style.display='block';sm.textContent=boardExpanded?'Show less':`Show all ${board.length} players`;sm.onclick=()=>{boardExpanded=!boardExpanded;renderBoard();};}
+  else sm.style.display='none';
 }
 
 function renderRecord(){
@@ -129,6 +200,14 @@ function renderRecord(){
   let html='';
   DATA.awards.forEach(ab=>{
     let awardHtml='';
+    // aggregate picks across seasons by player for the per-award footer
+    const agg={};
+    ab.seasons.forEach(blk=>{
+      blk.picks.forEach(p=>{
+        if(!agg[p.player]) agg[p.player]={player:p.player,slug:p.slug,diff:0};
+        agg[p.player].diff+=p.diff;
+      });
+    });
     ab.seasons.forEach(blk=>{
       let picks=blk.picks;
       if(onlyDiff) picks=picks.filter(p=>Math.abs(p.diff)>=0.3);  // hide near-identical
@@ -145,7 +224,24 @@ function renderRecord(){
       awardHtml+=`</div></div>`;
     });
     if(awardHtml){
-      html+=`<div class="award-block"><div class="award-h">${esc(AWARD_FULL[ab.award]||ab.award)}</div>${awardHtml}</div>`;
+      // build the footer: top boosted (highest +) and snubbed (lowest -) across all seasons of this award
+      const all=Object.values(agg);
+      const boosted=all.filter(p=>p.diff>=0.3).sort((a,b)=>b.diff-a.diff).slice(0,3);
+      const snubbed=all.filter(p=>p.diff<=-0.3).sort((a,b)=>a.diff-b.diff).slice(0,3);
+      let footer='';
+      if(boosted.length||snubbed.length){
+        footer+=`<div class="award-extremes">`;
+        if(boosted.length){
+          footer+=`<div class="ex-line"><span class="ex-lbl ex-up">Most boosted</span>`+
+            boosted.map(c=>`<span class="ex-chip up"><a href="player.html?p=${c.slug}">${esc(c.player)}</a> <b>+${c.diff.toFixed(1)}</b></span>`).join('')+`</div>`;
+        }
+        if(snubbed.length){
+          footer+=`<div class="ex-line"><span class="ex-lbl ex-dn">Most snubbed</span>`+
+            snubbed.map(c=>`<span class="ex-chip dn"><a href="player.html?p=${c.slug}">${esc(c.player)}</a> <b>${c.diff.toFixed(1)}</b></span>`).join('')+`</div>`;
+        }
+        footer+=`</div>`;
+      }
+      html+=`<div class="award-block"><div class="award-h">${esc(AWARD_FULL[ab.award]||ab.award)}</div>${awardHtml}${footer}</div>`;
     }
   });
   el.innerHTML=html||'<div class="hint">No differences from consensus to show. Toggle "Show all picks".</div>';
