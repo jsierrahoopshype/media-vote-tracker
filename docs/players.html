@@ -66,6 +66,20 @@ table.lb td.pl{text-align:left;font-family:'DM Sans',sans-serif;max-width:16rem}
 .pp .ol a{color:var(--text-secondary);text-decoration:none}
 .pp .ol a:hover{color:var(--accent)}
 .dash{color:var(--text-secondary)}
+.cards{display:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary)}
+.card-head .nm{font-weight:600;font-size:.96rem}
+.card-head .nm a{color:var(--text);text-decoration:none}
+.card-head .nm a:hover{color:var(--accent)}
+.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
+.card-pp .lbl{display:inline-block;min-width:4.4rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card-pp a{color:var(--text);text-decoration:none}
+.card-pp a:hover{color:var(--accent)}
+.card-pp .ol{font-size:.66rem;color:var(--text-secondary);margin-left:.2rem}
+.card-pp .ol a{color:var(--text-secondary);text-decoration:none}
+.card-pp .ol a:hover{color:var(--accent)}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
 .foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
 @media(max-width:860px){
@@ -73,8 +87,8 @@ table.lb td.pl{text-align:left;font-family:'DM Sans',sans-serif;max-width:16rem}
   .filter-group.search{grid-column:1/-1}
   .filter-group.reset-group{grid-column:1/-1}
   .reset-btn{width:100%;padding:.35rem}
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table.lb{min-width:700px}
+  .table-wrap{display:none}
+  .cards{display:block}
   .subtitle{display:none}
   .tabs{margin-bottom:.6rem}.tabs a{padding:.3rem .65rem;font-size:.68rem}
   .hdr{margin-bottom:.5rem}.hdr h1{font-size:1.15rem}.hdr .brand{display:none}
@@ -103,6 +117,7 @@ table.lb td.pl{text-align:left;font-family:'DM Sans',sans-serif;max-width:16rem}
 
   <div class="summary" id="summary"></div>
   <div class="table-wrap"><table class="lb"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div>
+  <div class="cards" id="cards"></div>
   <div class="empty" id="empty" style="display:none">No players match.</div>
   <div class="foot">Support = a voter's points for a player minus the rest of that season's panel average, summed across shared ballots. Click any player, booster, or snubber.</div>
 </div>
@@ -172,6 +187,19 @@ function render(){
       `<td class="pp${k('top_sup')}">${sup}</td>`+
       `<td class="pp${k('top_snub')}">${snub}</td>`;
     body.appendChild(tr);
+  });
+
+  const cards=document.getElementById('cards');cards.innerHTML='';
+  list.forEach((p,i)=>{
+    const div=document.createElement('div');div.className='card';
+    div.onclick=()=>location.href='player.html?p='+encodeURIComponent(p.slug);
+    const sup=p.top_sup?`<a href="reporter.html?v=${encodeURIComponent(p.top_sup.slug)}" onclick="event.stopPropagation()">${esc(p.top_sup.voter)}</a> <span class="dl pos">+${p.top_sup.diff.toFixed(1)}</span>${p.top_sup.outlet?` <span class="ol">${outletLink(p.top_sup.outlet)}</span>`:''}`:'—';
+    const snub=p.top_snub?`<a href="reporter.html?v=${encodeURIComponent(p.top_snub.slug)}" onclick="event.stopPropagation()">${esc(p.top_snub.voter)}</a> <span class="dl neg">${p.top_snub.diff.toFixed(1)}</span>${p.top_snub.outlet?` <span class="ol">${outletLink(p.top_snub.outlet)}</span>`:''}`:'—';
+    div.innerHTML=`<div class="card-rank">#${i+1}</div>`+
+      `<div class="card-head"><div class="nm"><a href="player.html?p=${encodeURIComponent(p.slug)}" onclick="event.stopPropagation()">${esc(p.player)}${flag(p.country)}</a></div></div>`+
+      `<div class="card-pp"><span class="lbl">Boosted by</span> ${sup}</div>`+
+      `<div class="card-pp"><span class="lbl">Snubbed by</span> ${snub}</div>`;
+    cards.appendChild(div);
   });
 }
 document.getElementById('q').addEventListener('input',render);

@@ -66,6 +66,18 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;font-size:.8re
 .pp .ctx{display:block;font-size:.64rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;margin-top:.05rem}
 .lean-pill{display:inline-block;padding:.1rem .5rem;border-radius:20px;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.76rem}
 .dash{color:var(--text-secondary)}
+.cards{display:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary)}
+.card-head .nm{font-weight:600;font-size:.96rem}
+.card-head .nm a{color:var(--text);text-decoration:none}
+.card-head .nm a:hover{color:var(--accent)}
+.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
+.card-pp .lbl{display:inline-block;min-width:4.4rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card-pp a{color:var(--text);text-decoration:none}
+.card-pp a:hover{color:var(--accent)}
+.card-pp .ctx{font-size:.64rem;color:var(--text-secondary);margin-left:.2rem;font-family:'JetBrains Mono',monospace}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
 .foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;font-family:'JetBrains Mono',monospace;line-height:1.7}
 @media(max-width:860px){
@@ -73,8 +85,8 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;font-size:.8re
   .filter-group.search{grid-column:1/-1}
   .filter-group.reset-group{grid-column:1/-1}
   .reset-btn{width:100%;padding:.35rem}
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table.lb{min-width:760px}
+  .table-wrap{display:none}
+  .cards{display:block}
   .subtitle,.note{display:none}
   .tabs{margin-bottom:.6rem}.tabs a{padding:.3rem .65rem;font-size:.68rem}
   .hdr{margin-bottom:.5rem}.hdr h1{font-size:1.15rem}.hdr .brand{display:none}
@@ -105,6 +117,7 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;font-size:.8re
   <div class="summary" id="summary"></div>
   <div class="note">Lean = average absolute gap between the outlet's vote and the panel's, across all its picks. Bigger = the outlet's writers more often diverged from consensus (small national outlets regress toward the panel; local beats lean harder).</div>
   <div class="table-wrap"><table class="lb"><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div>
+  <div class="cards" id="cards"></div>
   <div class="empty" id="empty" style="display:none">No outlets match.</div>
   <div class="foot">Click any outlet for its full collective voting record vs the panel.</div>
 </div>
@@ -183,6 +196,19 @@ function render(){
       `<td class="pp${k('biggest_over')}">${over}</td>`+
       `<td class="pp${k('biggest_under')}">${under}</td>`;
     body.appendChild(tr);
+  });
+
+  const cards=document.getElementById('cards');cards.innerHTML='';
+  list.forEach((o,i)=>{
+    const div=document.createElement('div');div.className='card';
+    div.onclick=()=>location.href='outlet.html?o='+encodeURIComponent(o.slug);
+    const over=o.biggest_over?`<a href="player.html?p=${o.biggest_over.slug}" onclick="event.stopPropagation()">${esc(o.biggest_over.player)}</a> <span class="dl pos">+${o.biggest_over.diff.toFixed(1)}</span> <span class="ctx">${AW[o.biggest_over.award]||o.biggest_over.award} ${o.biggest_over.season}</span>`:'—';
+    const under=o.biggest_under?`<a href="player.html?p=${o.biggest_under.slug}" onclick="event.stopPropagation()">${esc(o.biggest_under.player)}</a> <span class="dl neg">${o.biggest_under.diff.toFixed(1)}</span> <span class="ctx">${AW[o.biggest_under.award]||o.biggest_under.award} ${o.biggest_under.season}</span>`:'—';
+    div.innerHTML=`<div class="card-rank">#${i+1}</div>`+
+      `<div class="card-head"><div class="nm"><a href="outlet.html?o=${encodeURIComponent(o.slug)}" onclick="event.stopPropagation()">${esc(o.outlet)}${flag(o.country)}</a></div></div>`+
+      `<div class="card-pp"><span class="lbl">Boosted</span> ${over}</div>`+
+      `<div class="card-pp"><span class="lbl">Snubbed</span> ${under}</div>`;
+    cards.appendChild(div);
   });
 }
 document.getElementById('q').addEventListener('input',render);

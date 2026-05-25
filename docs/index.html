@@ -92,6 +92,27 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13re
 .pp .sub{font-size:.66rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace}
 .dash{color:var(--text-secondary)}
 
+/* mobile cards */
+.cards{display:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:.8rem .9rem;margin-bottom:.6rem;cursor:pointer;transition:.15s}
+.card:hover{border-color:var(--accent)}
+.card-rank{position:absolute;top:.7rem;right:.9rem;font-family:'JetBrains Mono',monospace;font-size:.66rem;
+  color:var(--text-secondary)}
+.card-head .nm{font-weight:600;font-size:.96rem}
+.card-head .nm a{color:var(--text);text-decoration:none}
+.card-head .nm a:hover{color:var(--accent)}
+.card-head .ou{font-size:.74rem;color:var(--text-secondary);margin-top:.1rem}
+.card-head .ou a{color:var(--text-secondary);text-decoration:none}
+.card-head .ou a:hover{color:var(--accent)}
+.card-pp{margin-top:.4rem;font-size:.82rem;line-height:1.5}
+.card-pp a{color:var(--text);text-decoration:none}
+.card-pp a:hover{color:var(--accent)}
+.card-pp .lbl{display:inline-block;min-width:4.2rem;font-size:.62rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.card-pp .ol{font-size:.66rem;color:var(--text-secondary);margin-left:.2rem}
+.card-pp .ol a{color:var(--text-secondary)}
+.card-pp .ol a:hover{color:var(--accent)}
+
 .empty{text-align:center;padding:3rem 1rem;color:var(--text-secondary)}
 .foot{text-align:center;font-size:.72rem;color:var(--text-secondary);margin-top:1.4rem;
   font-family:'JetBrains Mono',monospace;line-height:1.7}
@@ -101,9 +122,8 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13re
   .filter-group.search{grid-column:1/-1}
   .filter-group.reset-group{grid-column:1/-1}
   .reset-btn{width:100%;padding:.35rem}
-  /* horizontally scrollable table on narrow screens */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table.lb{min-width:780px}
+  .table-wrap{display:none}
+  .cards{display:block}
   /* compact the filter panel + intro on mobile */
   .subtitle{display:none}
   .tabs{margin-bottom:.6rem}
@@ -166,6 +186,7 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13re
       <tbody id="body"></tbody>
     </table>
   </div>
+  <div class="cards" id="cards"></div>
   <div class="empty" id="empty" style="display:none">No reporters match those filters.</div>
 
   <div class="foot">
@@ -278,6 +299,23 @@ function render(){
       `<td class="pp${k('detr')}">${detr}</td>`+
       `<td class="${k('outlier_rate')}" style="${outlierStyle(r.outlier_rate)}">${Math.round(r.outlier_rate*100)}%</td>`;
     body.appendChild(tr);
+  });
+
+  // cards (mobile) — compact, no ballot counts / span
+  const cards=document.getElementById('cards'); cards.innerHTML='';
+  list.forEach((r,i)=>{
+    const div=document.createElement('div'); div.className='card';
+    div.onclick=()=>{ window.location.href='reporter.html?v='+encodeURIComponent(r.slug); };
+    const fave = r.fave? `<a href="player.html?p=${r.fave.slug}" onclick="event.stopPropagation()">${esc(r.fave.player)}</a> <span class="dl pos">+${r.fave.diff.toFixed(1)}</span>` : '—';
+    const detr = r.detr? `<a href="player.html?p=${r.detr.slug}" onclick="event.stopPropagation()">${esc(r.detr.player)}</a> <span class="dl neg">${r.detr.diff.toFixed(1)}</span>` : '—';
+    const flag = r.low_sample? '<span class="flag">&lt;3 yr</span>':'';
+    const outletLink = r.outlet? `<a href="outlet.html?o=${r.outlet_slug}" onclick="event.stopPropagation()">${esc(r.outlet)}</a>${r.country?' '+flagEmoji(r.country):''}` : (r.country?flagEmoji(r.country):'');
+    div.innerHTML =
+      `<div class="card-rank">#${i+1}</div>`+
+      `<div class="card-head"><div class="nm"><a href="reporter.html?v=${encodeURIComponent(r.slug)}" onclick="event.stopPropagation()">${esc(r.voter)}</a>${flag}</div><div class="ou">${outletLink}</div></div>`+
+      `<div class="card-pp"><span class="lbl">Boosted</span> ${fave}</div>`+
+      `<div class="card-pp"><span class="lbl">Snubbed</span> ${detr}</div>`;
+    cards.appendChild(div);
   });
 }
 function k(key){return key===sortKey?' sorted-by':'';}
