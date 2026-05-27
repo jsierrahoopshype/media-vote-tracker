@@ -45,6 +45,20 @@ input[type=text],select{width:100%;padding:.5rem .8rem;font-size:.85rem;font-fam
   border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);transition:.15s}
 input[type=text]:hover,select:hover{border-color:var(--accent)}
 input[type=text]:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+/* autocomplete dropdown: tappable matches that appear under the search box */
+.filter-group.search{position:relative}
+.ac{position:absolute;top:100%;left:0;right:0;margin-top:.25rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);
+  max-height:18rem;overflow-y:auto;z-index:50;display:none}
+.ac.open{display:block}
+.ac-item{padding:.55rem .8rem;cursor:pointer;border-bottom:1px solid var(--border);
+  font-size:.88rem;display:flex;justify-content:space-between;align-items:center;gap:.6rem}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.sel{background:var(--surface-hover)}
+.ac-item .ac-main{font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-item .ac-sub{font-size:.7rem;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
+.ac-empty{padding:.7rem .8rem;color:var(--text-secondary);font-size:.78rem;text-align:center}
 .season-range{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:.35rem}
 .season-arrow{color:var(--text-secondary);font-size:.7rem;padding-bottom:.6rem}
 .reset-btn{padding:.5rem .8rem;font-size:.72rem;font-family:inherit;font-weight:600;text-transform:uppercase;
@@ -133,7 +147,8 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13re
   .hdr .brand{display:none}
   .filters{padding:.3rem 0 .5rem}
   .filter-group label{font-size:.54rem;margin-bottom:.05rem;letter-spacing:.04em}
-  input[type=text],select{padding:.38rem .55rem;font-size:.8rem}
+  /* iOS Safari zooms when input font-size < 16px; force 16px on mobile */
+  input[type=text],select{padding:.5rem .6rem;font-size:16px}
   .summary{margin:.1rem 0 .6rem;font-size:.7rem}
 }
 </style>
@@ -156,6 +171,7 @@ table.lb td.pp{text-align:center;font-family:'DM Sans',sans-serif;max-width:13re
       <div class="filter-group search">
         <label>Search reporter or outlet</label>
         <input type="text" id="q" placeholder="e.g. Aldridge, ESPN, The Athletic…" autocomplete="off">
+        <div class="ac" id="ac" role="listbox"></div>
       </div>
       <div class="filter-group">
         <label>Country</label>
@@ -323,7 +339,12 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;'
 
 // country -> ISO2 for real flag images (Windows can't render flag emoji)
 const ISO={US:'us',Canada:'ca',Spain:'es',France:'fr',Italy:'it',Mexico:'mx',
-  China:'cn',UK:'gb',Australia:'au',Philippines:'ph',Brazil:'br',Germany:'de',Argentina:'ar'};
+  China:'cn',UK:'gb','United Kingdom':'gb',Australia:'au',Philippines:'ph',Brazil:'br',
+  Germany:'de',Argentina:'ar',Serbia:'rs',Slovenia:'si',Greece:'gr',Cameroon:'cm',
+  Lithuania:'lt',Croatia:'hr',Latvia:'lv',Turkey:'tr',Nigeria:'ng',Switzerland:'ch',
+  Austria:'at',Finland:'fi',Japan:'jp',Portugal:'pt',Israel:'il',Russia:'ru',
+  Ukraine:'ua',Sweden:'se',Belgium:'be',Netherlands:'nl',Ireland:'ie',Poland:'pl',
+  Bahamas:'bs',Georgia:'ge'};
 function flagEmoji(c){
   const code=ISO[c];
   if(!code) return (c&&c!=='n/a')? `<span class="cc">${esc(c)}</span>` : '';
@@ -337,9 +358,87 @@ function outlierStyle(rate){
   return `background-color:hsl(${hue},70%,70%);color:hsl(${hue},85%,17%);font-weight:600`;
 }
 
+// ---- autocomplete dropdown (search reporters + outlets) -----------------
+let OUTLETS_LIST = [];   // [{outlet, slug:outlet_slug, n_ballots}]
+let acSel = -1;          // currently-highlighted item index
+let acItems = [];        // current match list (for keyboard nav + click handlers)
+
+function buildAcMatches(qry){
+  if(!qry || qry.length < 2) return [];
+  const q = qry.toLowerCase();
+  // Match reporters: name OR outlet contains the query
+  const repMatches = REPORTERS
+    .filter(r => (r.voter||'').toLowerCase().includes(q) || (r.outlet||'').toLowerCase().includes(q))
+    .sort((a,b)=>{
+      // Prioritize: starts-with name > name contains > outlet matches
+      const an=(a.voter||'').toLowerCase(), bn=(b.voter||'').toLowerCase();
+      const ax=an.startsWith(q)?0:(an.includes(q)?1:2);
+      const bx=bn.startsWith(q)?0:(bn.includes(q)?1:2);
+      if(ax!==bx) return ax-bx;
+      return b.n_ballots - a.n_ballots;
+    })
+    .slice(0,6)
+    .map(r=>({kind:'reporter', label:r.voter, sub:r.outlet||'', href:'reporter.html?v='+encodeURIComponent(r.slug)}));
+  // Match outlets directly
+  const outMatches = OUTLETS_LIST
+    .filter(o => (o.outlet||'').toLowerCase().includes(q))
+    .sort((a,b)=>{
+      const an=(a.outlet||'').toLowerCase(), bn=(b.outlet||'').toLowerCase();
+      const ax=an.startsWith(q)?0:1;
+      const bx=bn.startsWith(q)?0:1;
+      if(ax!==bx) return ax-bx;
+      return (b.n_ballots||0) - (a.n_ballots||0);
+    })
+    .slice(0,3)
+    .map(o=>({kind:'outlet', label:o.outlet, sub:'OUTLET', href:'outlet.html?o='+encodeURIComponent(o.slug)}));
+  // De-dup: drop outlet entries that already appeared as a reporter's outlet in the rep matches
+  const repOutlets = new Set(repMatches.map(r=>r.sub.toLowerCase()));
+  const filteredOut = outMatches.filter(o=>!repOutlets.has(o.label.toLowerCase()));
+  return [...repMatches, ...filteredOut].slice(0,8);
+}
+
+function renderAc(){
+  const ac = document.getElementById('ac');
+  const qry = document.getElementById('q').value.trim();
+  if(qry.length < 2){ ac.classList.remove('open'); acItems = []; acSel = -1; return; }
+  acItems = buildAcMatches(qry);
+  if(!acItems.length){
+    ac.innerHTML = '<div class="ac-empty">No matches</div>';
+    ac.classList.add('open');
+    acSel = -1;
+    return;
+  }
+  ac.innerHTML = acItems.map((m,i)=>
+    `<div class="ac-item${i===acSel?' sel':''}" data-i="${i}" role="option">`+
+      `<span class="ac-main">${esc(m.label)}</span>`+
+      `<span class="ac-sub">${esc(m.sub)}</span>`+
+    `</div>`).join('');
+  ac.classList.add('open');
+  // Click handlers
+  ac.querySelectorAll('.ac-item').forEach(el=>{
+    el.addEventListener('mousedown', (e)=>{   // mousedown so it fires before input blur
+      e.preventDefault();
+      const i = +el.dataset.i;
+      window.location.href = acItems[i].href;
+    });
+    el.addEventListener('mouseenter', ()=>{ acSel = +el.dataset.i; renderAc(); });
+  });
+}
+function closeAc(){ document.getElementById('ac').classList.remove('open'); acSel=-1; }
+
 ['q','fCountry','fFrom','fTo'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener(id==='q'?'input':'change', render);
+});
+document.getElementById('q').addEventListener('input', renderAc);
+document.getElementById('q').addEventListener('focus', renderAc);
+document.getElementById('q').addEventListener('blur', ()=>setTimeout(closeAc, 150));
+document.getElementById('q').addEventListener('keydown', (e)=>{
+  if(!acItems.length) return;
+  if(e.key==='ArrowDown'){ e.preventDefault(); acSel=(acSel+1)%acItems.length; renderAc(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); acSel=(acSel-1+acItems.length)%acItems.length; renderAc(); }
+  else if(e.key==='Enter' && acSel>=0){ e.preventDefault(); window.location.href = acItems[acSel].href; }
+  else if(e.key==='Escape'){ closeAc(); }
 });
 document.getElementById('reset').onclick=()=>{
   document.getElementById('q').value='';
@@ -351,11 +450,13 @@ document.getElementById('reset').onclick=()=>{
 Promise.all([
   fetch('./data/reporters.json').then(r=>r.json()),
   fetch('./data/meta.json').then(r=>r.json()),
-]).then(([reps, meta])=>{
+  fetch('./data/outlets.json').then(r=>r.json()).catch(()=>[]),
+]).then(([reps, meta, outlets])=>{
   REPORTERS = reps;
   META.awards = meta.awards;
   META.seasons = meta.seasons;
   META.countries = Array.from(new Set(reps.map(r=>r.country).filter(c=>c && c!=='n/a'))).sort();
+  OUTLETS_LIST = (outlets||[]).map(o=>({outlet:o.outlet, slug:o.slug, n_ballots:o.n_ballots}));
   populateFilters();
   render();
 }).catch(err=>{

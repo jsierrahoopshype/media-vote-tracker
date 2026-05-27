@@ -194,7 +194,9 @@ function boardForAward(){
 
 function render(){
   const d=DATA;
-  const flagBig=flagImg(d.outlet_history.length?d.outlet_history[d.outlet_history.length-1].country:'','flag-lg');
+  const lastOutletCountry = d.outlet_history.length ? d.outlet_history[d.outlet_history.length-1].country : '';
+  const voterCountry = d.country || lastOutletCountry;
+  const flagBig=flagImg(voterCountry,'flag-lg');
   const latestOutlet=d.outlet_history.length?d.outlet_history[d.outlet_history.length-1].outlet:'';
   const firstYr=d.seasons[0].slice(0,4);
   const lastYr=String(parseInt(d.seasons[d.seasons.length-1].slice(0,4))+1);
